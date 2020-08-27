@@ -1,0 +1,53 @@
+# Large files
+*.avi
+*.mp4
+*.h5
+*.pth
+*.ckpt
+*.zip
+*.pb
+*.trt
+*.onnx
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.idea/
+logs
+.catkin_tools
+*.cache
+src/neural_deployment/dist/
+
+#jupyter-notebook checkpoints
+.ipynb_checkpoints
+
+# ROS
+ros_ws/devel/
+ros_ws/build/
+*.bag
+
+# Large files
+*.avi
+*.mp4
+*.h5
+*.pth
+*.ckpt
+*.zip
+*.pb
+
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.idea/
+logs
+.catkin_tools
+
+
+# data and  big files
+data
+
+
+
