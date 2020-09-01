@@ -3,7 +3,22 @@ from torch.utils.data import Dataset as BaseDataset
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+import pickle
 
+def pickle_save(fname, data):
+    filehandler = open(fname,"wb")
+    pickle.dump(data,filehandler)
+    filehandler.close() 
+    print('saved', fname, os.getcwd(), os.listdir())
+
+def pickle_load(fname):
+    #print(os.getcwd(), os.listdir())
+    file = open(fname,'rb')
+    data = pickle.load(file)
+    file.close()
+    #print(data)
+    return data
 
 class Dataset(BaseDataset):
     """CamVid Dataset. Read images, apply augmentation and preprocessing transformations.
