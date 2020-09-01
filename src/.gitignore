@@ -35,7 +35,7 @@ ros_ws/build/
 *.ckpt
 *.zip
 *.pb
-
+*.pkl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
