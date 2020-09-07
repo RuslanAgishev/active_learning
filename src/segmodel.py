@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
-from dataset import Dataset
+from dataset import CamVid, BDD100K
 from augmentations import get_preprocessing, get_training_augmentation, get_validation_augmentation
 
 
@@ -15,9 +15,15 @@ class SegModel:
         self.arch = arch
         self.encoder = encoder
         self.encoder_weights = encoder_weights
-        self.classes = ['sky', 'building', 'pole', 'road', 'pavement', 
-                        'tree', 'signsymbol', 'fence', 'car', 
-                        'pedestrian', 'bicyclist']
+        # CamVid classes
+        # self.classes = ['sky', 'building', 'pole', 'road', 'pavement', 
+        #                 'tree', 'signsymbol', 'fence', 'car', 
+        #                 'pedestrian', 'bicyclist']
+
+        # BDD100K classes
+        self.classes = ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
+                        'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
+                        'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'void']
         self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
         self.activation = 'sigmoid' if len(self.classes) == 1 else 'softmax2d'
         self.device = 'cuda' if torch.cuda.is_available else 'cpu'
@@ -59,7 +65,12 @@ class SegModel:
         
         return train_epoch, valid_epoch
         
-    def create_datasets(self, train_images_paths, train_masks_paths, valid_images_paths, valid_masks_paths):
+    def create_datasets(self,
+                        train_images_paths,
+                        train_masks_paths,
+                        valid_images_paths,
+                        valid_masks_paths,
+                        Dataset=CamVid):
         train_dataset = Dataset(
             train_images_paths, 
             train_masks_paths, 
@@ -83,13 +94,20 @@ class SegModel:
                                activation=self.activation)
         return self.model
     
-    def train(self, train_images_paths, train_masks_paths, valid_images_paths, valid_masks_paths, verbose=False):
+    def train(self,
+              train_images_paths,
+              train_masks_paths,
+              valid_images_paths,
+              valid_masks_paths,
+              Dataset=CamVid,
+              verbose=False):
         if self.model is None: self.create_model()
         train_epoch, valid_epoch = self.create_epoch_runners(verbose=verbose)
         train_dataset, valid_dataset = self.create_datasets(train_images_paths,
                                                             train_masks_paths,
                                                             valid_images_paths,
-                                                            valid_masks_paths)
+                                                            valid_masks_paths,
+                                                            Dataset=Dataset)
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=12)
         valid_loader = DataLoader(valid_dataset, batch_size=1, shuffle=False, num_workers=4)
         # train loop
