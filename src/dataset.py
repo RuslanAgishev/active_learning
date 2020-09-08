@@ -71,7 +71,6 @@ class CamVid(BaseDataset):
         return len(self.images_fps)
 
 
-# classes for data loading and preprocessing
 class BDD100K(BaseDataset):
     """Berkeley Deep Drive Dataset. Read images, apply augmentation and preprocessing transformations.
     
