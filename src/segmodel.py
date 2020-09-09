@@ -5,28 +5,30 @@ import cv2
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
 from dataset import CamVid, BDD100K
-from augmentations import get_preprocessing, get_training_augmentation, get_validation_augmentation
+from augmentations import get_preprocessing
+from augmentations import get_training_augmentation
+from augmentations import get_validation_augmentation
 
 
 class SegModel:
-
-    def __init__(self, arch=smp.Unet, encoder='resnet18', encoder_weights='imagenet'):
+    """Segmentation Models wrapper
+    """
+    def __init__(self,
+                 name='Unet',
+                 encoder='resnet18',
+                 encoder_weights='imagenet',
+                 classes=['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
+                         'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
+                         'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'void']):
         # model params
-        self.arch = arch
+        self.arch = self.arch_selection_function(name)
         self.encoder = encoder
         self.encoder_weights = encoder_weights
-        # CamVid classes
-        # self.classes = ['sky', 'building', 'pole', 'road', 'pavement', 
-        #                 'tree', 'signsymbol', 'fence', 'car', 
-        #                 'pedestrian', 'bicyclist']
-
         # BDD100K classes
-        self.classes = ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
-                        'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
-                        'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'void']
+        self.classes = classes
         self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
         self.activation = 'sigmoid' if len(self.classes) == 1 else 'softmax2d'
-        self.device = 'cuda' if torch.cuda.is_available else 'cpu'
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.model = None
         self.max_iou_score = 0
         self.preprocessing_fn = smp.encoders.get_preprocessing_fn(self.encoder, self.encoder_weights)
@@ -34,6 +36,25 @@ class SegModel:
         self.learning_rate = 1e-4
         self.batch_size = 8
         self.epochs = 1
+
+    @staticmethod
+    def arch_selection_function(name):
+        if name =='Unet':
+            arch = smp.Unet
+        elif name =='Linknet':
+            arch = smp.Linknet
+        elif name =='FPN':
+            arch = smp.FPN
+        elif name =='PSPNet':
+            arch = smp.PSPNet
+    #     elif name =='PAN':
+    #         arch = smp.PAN
+    #     elif name =='DeepLabV3':
+    #         arch = smp.DeepLabV3
+        else:
+            print('Supported sample selection functions: Unet, Linknet, FPN, PSPNet')
+            return None
+        return arch
 
     def create_epoch_runners(self, verbose=False):
         # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
@@ -62,7 +83,6 @@ class SegModel:
             device=self.device,
             verbose=verbose,
         )
-        
         return train_epoch, valid_epoch
         
     def create_datasets(self,
@@ -101,7 +121,9 @@ class SegModel:
               valid_masks_paths,
               Dataset=CamVid,
               verbose=False):
-        if self.model is None: self.create_model()
+        if self.model is None:
+            print('Creating new model')
+            self.create_model()
         train_epoch, valid_epoch = self.create_epoch_runners(verbose=verbose)
         train_dataset, valid_dataset = self.create_datasets(train_images_paths,
                                                             train_masks_paths,
@@ -131,7 +153,7 @@ class SegModel:
             # input preprocessing
             image_raw = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
             image = np.copy(image_raw)
-            image = cv2.resize(image, (320, 320))
+            image = cv2.resize(image, (352, 640))
             preprocessing = get_preprocessing(self.preprocessing_fn)
             image = preprocessing(image=image)['image']
             images.append(image)
@@ -141,20 +163,3 @@ class SegModel:
         return predictions
     
     
-def model_selection_function(name):
-    if name =='Unet':
-        arch = smp.Unet
-    elif name =='Linknet':
-        arch = smp.Linknet
-    elif name =='FPN':
-        arch = smp.FPN
-    elif name =='PSPNet':
-        arch = smp.PSPNet
-#     elif name =='PAN':
-#         arch = smp.PAN
-#     elif name =='DeepLabV3':
-#         arch = smp.DeepLabV3
-    else:
-        print('Supported sample selection functions: Unet, Linknet, FPN, PSPNet')
-        return None
-    return SegModel(arch=arch)

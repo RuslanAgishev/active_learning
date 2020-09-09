@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from dataset import BDD100K
-from segmodel import SegModel, model_selection_function
+from segmodel import SegModel
 
 
 DATA_DIR = '/home/ruslan/datasets/bdd100k/seg/'
@@ -30,7 +30,10 @@ y_valid_paths = np.sort([os.path.join(y_valid_dir, image_name) for image_name in
 X_test_paths = np.sort([os.path.join(x_test_dir, image_name) for image_name in os.listdir(x_test_dir)])
 
 
-unet = model_selection_function('Unet')
+classes = ['road', 'sidewalk', 'building']#, 'wall', 'fence', 'pole', 'traffic light',
+           # 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
+           # 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
+unet = SegModel('Unet', classes=classes)
 unet.epochs = 1
 unet.train(X_train_paths, y_train_paths, X_valid_paths, y_valid_paths, BDD100K, verbose=True)
 

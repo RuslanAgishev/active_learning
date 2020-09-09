@@ -11,7 +11,7 @@ import numpy as np
 from tqdm import tqdm
 import segmentation_models_pytorch as smp
 # segmentation models wrapper
-from segmodel import SegModel, model_selection_function
+from segmodel import SegModel
 # anomaly detection functions
 from anomaly_detection import sample_selection_function
 # datasets wrapper
@@ -43,14 +43,14 @@ X_test_paths = np.array([os.path.join(x_test_dir, image_name) for image_name in 
 # - X_train, y_train: is used partially to train a model
 # - X_valid, y_valid: is used fully for validation
 # - X_test, y_test: is used as an unlabelled set to detect anomalies and add labels to train set
-def al_experiment(model_str,
+def al_experiment(model_name,
                   samples_selection_str,
                   k,
                   visualize_most_uncertain=False,
                   verbose_train=False,
                   random_seed=0):
     # define model from its name
-    model = model_selection_function(model_str)
+    model = SegModel(model_name, classes=SEMSEG_CLASSES)
     model.epochs = MODEL_TRAIN_EPOCHS
     # define samples selection function from its name
     samples_selection_fn = sample_selection_function(samples_selection_str)
@@ -140,27 +140,27 @@ def main():
 
     results = {}
     # choose model
-    for model_str in MODELS:
-        print(f'\nModel name: {model_str}')
+    for model_name in MODELS:
+        print(f'\nModel name: {model_name}')
         print('------------------------------------')
-        results[model_str] = {}
+        results[model_name] = {}
         
         # choose samples selection function
         for samples_selection_str in SAMPLES_SELECTIONS:
             print(f'\nSamples selection function: {samples_selection_str}')
             print('------------------------------------')
-            results[model_str][samples_selection_str] = {}
+            results[model_name][samples_selection_str] = {}
             
             # choose number of samples to select for labelling from inference results
             for k in NUM_UNCERTAIN_IMAGES:
                 print(f'\nNumber of samples to label on one iteration, k={k}')
                 print('------------------------------------')
-                results[model_str][samples_selection_str][str(k)] = {}
+                results[model_name][samples_selection_str][str(k)] = {}
                 
-                IoUs, N_train_samples = al_experiment(model_str, samples_selection_str, k, verbose_train=True)
+                IoUs, N_train_samples = al_experiment(model_name, samples_selection_str, k, verbose_train=True)
                 
-                results[model_str][samples_selection_str][str(k)]['IoUs'] = IoUs
-                results[model_str][samples_selection_str][str(k)]['N_train_samples'] = N_train_samples
+                results[model_name][samples_selection_str][str(k)]['IoUs'] = IoUs
+                results[model_name][samples_selection_str][str(k)]['N_train_samples'] = N_train_samples
                 
     pickle_save('./results/'+RESULTS_FNAME, results)
 
@@ -169,16 +169,16 @@ def main():
 
     plt.figure(figsize=(8,8))
     # choose model
-    for model_str in MODELS:    
+    for model_name in MODELS:    
         # choose samples selection function
         for samples_selection_str in SAMPLES_SELECTIONS:        
             # choose number of samples to select for labelling from inference results
             for k in NUM_UNCERTAIN_IMAGES:
 
-                ious = results[model_str][samples_selection_str][str(k)]['IoUs']
-                n_train = results[model_str][samples_selection_str][str(k)]['N_train_samples']
+                ious = results[model_name][samples_selection_str][str(k)]['IoUs']
+                n_train = results[model_name][samples_selection_str][str(k)]['N_train_samples']
 
-                plt.plot(np.array(n_train[1:]), ious[1:], label=model_str+'_'+samples_selection_str+'_k='+str(k))
+                plt.plot(np.array(n_train[1:]), ious[1:], label=model_name+'_'+samples_selection_str+'_k='+str(k))
             
     plt.grid()
     plt.title('Active Learning Results', fontsize=18)
@@ -193,6 +193,7 @@ INITIAL_N_TRAIN_IMAGES = 1000 # 20, initial number of accessible labelled images
 NUM_UNCERTAIN_IMAGES = [500]#, 20]#, 40, 60] # k: number of uncertain images to label at each AL cicle
 SAMPLES_SELECTIONS = ['Margin', 'Random']#, 'Entropy']
 MODELS = ['Unet']#, 'Linknet', 'FPN', 'PSPNet']
+SEMSEG_CLASSES = ['road', 'car']
 
 if __name__=='__main__':
     main()
