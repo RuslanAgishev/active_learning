@@ -4,9 +4,10 @@ import numpy as np
 import cv2
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
+from torch.utils.tensorboard import SummaryWriter
 from dataset import Dataset
 from augmentations import get_preprocessing, get_training_augmentation, get_validation_augmentation
-
+from time import time
 
 class SegModel:
 
@@ -28,6 +29,8 @@ class SegModel:
         self.learning_rate = 1e-4
         self.batch_size = 8
         self.epochs = 1
+        self.time0 = time()
+        #self.tb = SummaryWriter(log_dir=f'al_runs/{time()}') # tensorboard
 
     def create_epoch_runners(self, verbose=False):
         # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
@@ -56,7 +59,6 @@ class SegModel:
             device=self.device,
             verbose=verbose,
         )
-        
         return train_epoch, valid_epoch
         
     def create_datasets(self, train_images_paths, train_masks_paths, valid_images_paths, valid_masks_paths):
@@ -83,7 +85,7 @@ class SegModel:
                                activation=self.activation)
         return self.model
     
-    def train(self, train_images_paths, train_masks_paths, valid_images_paths, valid_masks_paths, verbose=False):
+    def train(self, train_images_paths, train_masks_paths, valid_images_paths, valid_masks_paths, verbose=False):      
         if self.model is None: self.create_model()
         train_epoch, valid_epoch = self.create_epoch_runners(verbose=verbose)
         train_dataset, valid_dataset = self.create_datasets(train_images_paths,
@@ -92,6 +94,7 @@ class SegModel:
                                                             valid_masks_paths)
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=12)
         valid_loader = DataLoader(valid_dataset, batch_size=1, shuffle=False, num_workers=4)
+        
         # train loop
         max_score = 0
         for i in range(0, self.epochs):
@@ -103,6 +106,12 @@ class SegModel:
                 max_score = valid_logs['iou_score']
                 torch.save(self.model, './best_model.pth')
                 if verbose: print('Model saved!')
+            # tensorboard logging
+            #self.tb.add_scalar('Valid_Dice_Loss vs Time', valid_logs['dice_loss'], time()-self.time0)
+            #self.tb.add_scalar('Train_Dice_Loss vs Time', train_logs['dice_loss'], time()-self.time0)
+            #self.tb.add_scalar('Valid_IoU vs Time', valid_logs['iou_score'], time()-self.time0)
+            #self.tb.add_scalar('Train_IoU vs Time', train_logs['iou_score'], time()-self.time0)
+                    
         # update model with the best saved
         self.max_iou_score = max_score
         self.model = torch.load('./best_model.pth')
