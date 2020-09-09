@@ -7,6 +7,7 @@ import cv2
 import matplotlib.pyplot as plt
 from utils import visualize, pickle_load, pickle_save
 import torch
+from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 from tqdm import tqdm
 import segmentation_models_pytorch as smp
@@ -46,9 +47,12 @@ X_test_paths = np.array([os.path.join(x_test_dir, image_name) for image_name in 
 def al_experiment(model_name,
                   samples_selection_str,
                   k,
+                  experiment_name,
                   visualize_most_uncertain=False,
                   verbose_train=False,
                   random_seed=0):
+
+    tb = SummaryWriter(log_dir=f'runs/{experiment_name}')
     # define model from its name
     model = SegModel(model_name, classes=SEMSEG_CLASSES)
     model.epochs = MODEL_TRAIN_EPOCHS
@@ -87,6 +91,8 @@ def al_experiment(model_name,
         IoUs.append(model.max_iou_score)
         N_train_samples.append(len(X_train_paths_part))
         
+        tb.add_scalar('Valid IoU vs N train images', model.max_iou_score, len(X_train_paths_part))
+
         if len(X_test) < k:
             print('\nNo more images in Unlabelled set')
             break
@@ -157,7 +163,8 @@ def main():
                 print('------------------------------------')
                 results[model_name][samples_selection_str][str(k)] = {}
                 
-                IoUs, N_train_samples = al_experiment(model_name, samples_selection_str, k, verbose_train=True)
+                experiment_name = f'{model_name}-{samples_selection_str}-{k}'
+                IoUs, N_train_samples = al_experiment(model_name, samples_selection_str, k, experiment_name, verbose_train=True)
                 
                 results[model_name][samples_selection_str][str(k)]['IoUs'] = IoUs
                 results[model_name][samples_selection_str][str(k)]['N_train_samples'] = N_train_samples

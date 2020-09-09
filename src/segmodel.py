@@ -34,7 +34,7 @@ class SegModel:
         self.preprocessing_fn = smp.encoders.get_preprocessing_fn(self.encoder, self.encoder_weights)
         # training params
         self.learning_rate = 1e-4
-        self.batch_size = 8
+        self.batch_size = 16
         self.epochs = 1
 
     @staticmethod
