@@ -48,6 +48,7 @@ logs
 
 # data and  big files
 data
-
+src/al_runs
+configs
 
 
