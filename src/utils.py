@@ -30,3 +30,12 @@ def visualize(**images):
         plt.title(' '.join(name.split('_')).title())
         plt.imshow(image)
     plt.show()
+
+def find_common_elements(list1, list2):
+    """
+    >>> list1 = [1,2,3,4,5,6]
+    >>> list2 = [3, 5, 7, 9]
+    >>> find_common_elements(list1, list2)
+    [3, 5]
+    """
+    return list(set(list1).intersection(list2))

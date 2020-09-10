@@ -48,8 +48,8 @@ logs
 
 # data and  big files
 data
-src/al_runs
-src/runs
-configs
+# tensorboard logs
+src/tb_*
+
 
 

@@ -2,6 +2,7 @@
 
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+# os.environ['TORCH_HOME'] = '/home/jovyan/.cache/torch/'
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -71,7 +72,7 @@ def al_experiment(model_name,
     y_test = np.delete(X, initial_selection)
 
     IoUs = [0.]
-    N_train_samples = [len(X_train_paths_part)]
+    N_train_samples = [0]
 
     # main loop
     while len(X_train_paths_part) <= MAX_QUEERY_IMAGES:
@@ -99,12 +100,6 @@ def al_experiment(model_name,
             
         selected_images_indexes = samples_selection_fn(X_test, k, model)
 
-        # Add labels for uncertain images to train data
-        #print('Labelled set before: ', len(X_train_paths_part))
-        X_train_paths_part = np.concatenate([X_train_paths_part, X_test[selected_images_indexes]])
-        y_train_paths_part = np.concatenate([y_train_paths_part, y_test[selected_images_indexes]])
-        #print('Labelled set after: ', len(X_train_paths_part))
-
         # Visualization
         if visualize_most_uncertain:
             print('Visualizing most uncertain results so far:')
@@ -116,6 +111,12 @@ def al_experiment(model_name,
                 mask_np = pr_mask.squeeze().cpu().numpy().round()
 
                 visualize(image=image, car_mask=mask_np[0,...], road_mask=mask_np[1,...])
+
+        # Add labels for uncertain images to train data
+        #print('Labelled set before: ', len(X_train_paths_part))
+        X_train_paths_part = np.concatenate([X_train_paths_part, X_test[selected_images_indexes]])
+        y_train_paths_part = np.concatenate([y_train_paths_part, y_test[selected_images_indexes]])
+        #print('Labelled set after: ', len(X_train_paths_part))
 
         # Remove labelled data from validation set
         #print('Unlabelled set before: ', len(X_test))
@@ -171,7 +172,6 @@ def main():
                 
     pickle_save('./results/'+RESULTS_FNAME, results)
 
-
     results = pickle_load('./results/'+RESULTS_FNAME)
 
     plt.figure(figsize=(8,8))
@@ -192,15 +192,16 @@ def main():
     plt.xlabel('N images', fontsize=16)
     plt.ylabel('IoU', fontsize=16)
     plt.legend()
-    plt.imsave('results.png')
+    plt.savefig('results.png')
 
-MAX_QUEERY_IMAGES = 3000 # 220 # maximum number of images to train on during AL loop
-MODEL_TRAIN_EPOCHS = 5 # 5 # number of epochs to train a model during one AL cicle
+
+MAX_QUEERY_IMAGES = 2000 # 220 # maximum number of images to train on during AL loop
+MODEL_TRAIN_EPOCHS = 2 # 5 # number of epochs to train a model during one AL cicle
 INITIAL_N_TRAIN_IMAGES = 1000 # 20, initial number of accessible labelled images
 NUM_UNCERTAIN_IMAGES = [500]#, 20]#, 40, 60] # k: number of uncertain images to label at each AL cicle
-SAMPLES_SELECTIONS = ['Margin', 'Random']#, 'Entropy']
+SAMPLES_SELECTIONS = ['Random']#, 'Margin', 'Entropy']
 MODELS = ['Unet']#, 'Linknet', 'FPN', 'PSPNet']
-SEMSEG_CLASSES = ['road', 'car']
+SEMSEG_CLASSES = ['road', 'sidewalk']
 
 if __name__=='__main__':
     main()

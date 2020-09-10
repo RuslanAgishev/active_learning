@@ -30,10 +30,13 @@ y_valid_paths = np.sort([os.path.join(y_valid_dir, image_name) for image_name in
 X_test_paths = np.sort([os.path.join(x_test_dir, image_name) for image_name in os.listdir(x_test_dir)])
 
 
-classes = ['road', 'sidewalk', 'building']#, 'wall', 'fence', 'pole', 'traffic light',
+classes = ['road', 'sidewalk']#, 'building', 'wall', 'fence', 'pole', 'traffic light',
            # 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
            # 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
 unet = SegModel('Unet', classes=classes)
-unet.epochs = 1
+unet.epochs = 5
+unet.learning_rate = 1e-4
+unet.batch_size = 8
+
 unet.train(X_train_paths, y_train_paths, X_valid_paths, y_valid_paths, BDD100K, verbose=True)
 

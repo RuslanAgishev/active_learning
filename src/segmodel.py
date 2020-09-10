@@ -4,6 +4,8 @@ import numpy as np
 import cv2
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset as BaseDataset
+from torch.optim.lr_scheduler import StepLR
+from torch.utils.tensorboard import SummaryWriter
 from dataset import CamVid, BDD100K
 from augmentations import get_preprocessing
 from augmentations import get_training_augmentation
@@ -34,7 +36,7 @@ class SegModel:
         self.preprocessing_fn = smp.encoders.get_preprocessing_fn(self.encoder, self.encoder_weights)
         # training params
         self.learning_rate = 1e-4
-        self.batch_size = 16
+        self.batch_size = 8
         self.epochs = 1
 
     @staticmethod
@@ -56,17 +58,11 @@ class SegModel:
             return None
         return arch
 
-    def create_epoch_runners(self, verbose=False):
-        # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
-        # IoU/Jaccard score - https://en.wikipedia.org/wiki/Jaccard_index
-        loss = smp.utils.losses.DiceLoss()
-        metrics = [
-            smp.utils.metrics.IoU(threshold=0.5),
-        ]
-        optimizer = torch.optim.Adam([ 
-            dict(params=self.model.parameters(), lr=self.learning_rate),
-        ])
-        # create epoch runners 
+    def create_epoch_runners(self,
+                             loss,
+                             metrics,
+                             optimizer,
+                             verbose=False):
         # it is a simple loop of iterating over dataloader`s samples
         train_epoch = smp.utils.train.TrainEpoch(
             self.model, 
@@ -121,10 +117,20 @@ class SegModel:
               valid_masks_paths,
               Dataset=CamVid,
               verbose=False):
+        tb = SummaryWriter(log_dir='tb_iou_epochs') # tensorboard
         if self.model is None:
             print('Creating new model')
             self.create_model()
-        train_epoch, valid_epoch = self.create_epoch_runners(verbose=verbose)
+        # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
+        # IoU/Jaccard score - https://en.wikipedia.org/wiki/Jaccard_index
+        loss = smp.utils.losses.DiceLoss()
+        metrics = [
+            smp.utils.metrics.IoU(threshold=0.5),
+        ]
+        optimizer = torch.optim.Adam([ 
+            dict(params=self.model.parameters(), lr=self.learning_rate),
+        ])
+        train_epoch, valid_epoch = self.create_epoch_runners(loss, metrics, optimizer, verbose=verbose)
         train_dataset, valid_dataset = self.create_datasets(train_images_paths,
                                                             train_masks_paths,
                                                             valid_images_paths,
@@ -132,17 +138,23 @@ class SegModel:
                                                             Dataset=Dataset)
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=12)
         valid_loader = DataLoader(valid_dataset, batch_size=1, shuffle=False, num_workers=4)
+        # LR scheduler
+        lr_scheduler = StepLR(optimizer, step_size=1, gamma=0.5)
         # train loop
         max_score = 0
         for i in range(0, self.epochs):
-            if verbose: print('\nEpoch: {}'.format(i))
+            if verbose:
+                print('\nEpoch:', i, 'LR:', lr_scheduler.get_last_lr())
             train_logs = train_epoch.run(train_loader)
             valid_logs = valid_epoch.run(valid_loader)
             # do something (save model, change lr, etc.)
+            lr_scheduler.step() # decay lr
             if max_score < valid_logs['iou_score']:
                 max_score = valid_logs['iou_score']
                 torch.save(self.model, './best_model.pth')
                 if verbose: print('Model saved!')
+            tb.add_scalar('Train IoU vs Epoch number', train_logs['iou_score'], i)
+            tb.add_scalar('Valid IoU vs Epoch number', valid_logs['iou_score'], i)
         # update model with the best saved
         self.max_iou_score = max_score
         self.model = torch.load('./best_model.pth')
