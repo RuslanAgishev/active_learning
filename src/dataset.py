@@ -4,8 +4,9 @@ import cv2
 import numpy as np
 
 
-class Dataset(BaseDataset):
-    """CamVid Dataset. Read images, apply augmentation and preprocessing transformations.
+class SemSegDataset(BaseDataset):
+    """Base Semantic Segmentation Dataset.
+    Read images, apply augmentation and preprocessing transformations.
     
     Args:
         images_dir (str): path to images folder
@@ -17,10 +18,7 @@ class Dataset(BaseDataset):
             (e.g. noralization, shape manipulation, etc.)
     
     """
-    
-    CLASSES = ['sky', 'building', 'pole', 'road', 'pavement', 
-               'tree', 'signsymbol', 'fence', 'car', 
-               'pedestrian', 'bicyclist', 'unlabelled']
+    ALL_CLASSES = []
     
     def __init__(
             self, 
@@ -34,7 +32,7 @@ class Dataset(BaseDataset):
         self.masks_fps = masks_paths
         
         # convert str names to class values on masks
-        self.class_values = [self.CLASSES.index(cls.lower()) for cls in classes]
+        self.class_values = [self.ALL_CLASSES.index(cls.lower()) for cls in classes]
         
         self.augmentation = augmentation
         self.preprocessing = preprocessing
@@ -69,3 +67,17 @@ class Dataset(BaseDataset):
         
     def __len__(self):
         return len(self.images_fps)
+
+class CamVid(SemSegDataset):
+    """CamVid Datatset.
+    """
+    ALL_CLASSES = ['sky', 'building', 'pole', 'road', 'pavement', 
+               'tree', 'signsymbol', 'fence', 'car', 
+               'pedestrian', 'bicyclist', 'unlabelled']
+
+class BDD100K(SemSegDataset):
+    """Berkeley Deep Drive Dataset.
+    """
+    ALL_CLASSES = ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
+		       'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
+		       'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'void']

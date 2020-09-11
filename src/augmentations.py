@@ -2,13 +2,13 @@ import albumentations as albu
 
 def get_training_augmentation():
     train_transform = [
+        albu.Resize(352, 640, interpolation=1, always_apply=True),
 
         albu.HorizontalFlip(p=0.5),
 
         albu.ShiftScaleRotate(scale_limit=0.5, rotate_limit=0, shift_limit=0.1, p=1, border_mode=0),
 
-        albu.PadIfNeeded(min_height=320, min_width=320, always_apply=True, border_mode=0),
-        albu.RandomCrop(height=320, width=320, always_apply=True),
+        albu.PadIfNeeded(min_height=352, min_width=640, always_apply=True, border_mode=0),
 
         albu.IAAAdditiveGaussianNoise(p=0.2),
         albu.IAAPerspective(p=0.5),
@@ -45,10 +45,9 @@ def get_training_augmentation():
 def get_validation_augmentation():
     """Add paddings to make image shape divisible by 32"""
     test_transform = [
-        albu.PadIfNeeded(384, 480)
+        albu.Resize(352, 640, interpolation=1, always_apply=True) #cv2.INTER_LINEAR
     ]
     return albu.Compose(test_transform)
-
 
 def to_tensor(x, **kwargs):
     return x.transpose(2, 0, 1).astype('float32')

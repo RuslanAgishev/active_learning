@@ -48,6 +48,9 @@ logs
 
 # data and  big files
 data
-al_runs
+results.png
+
+# tensorboard logs
+src/tb_*
 
 
