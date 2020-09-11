@@ -35,7 +35,7 @@ else:
 classes = ['road', 'car']
 
 unet = SegModel('Unet', classes=classes)
-unet.epochs = 5
+unet.epochs = 1
 unet.learning_rate = 1e-4
 unet.batch_size = 8
 

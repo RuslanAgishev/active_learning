@@ -20,9 +20,7 @@ class SegModel:
                  name='Unet',
                  encoder='resnet34',
                  encoder_weights='imagenet',
-                 classes=['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
-                         'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
-                         'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'void']):
+                 classes=['road', 'car']):
         # model params
         self.arch = self.arch_selection_function(name)
         self.encoder = encoder
@@ -33,14 +31,15 @@ class SegModel:
         self.activation = 'sigmoid' if len(self.classes) == 1 else 'softmax2d'
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.model = None
-        self.max_iou_score = 0
+        self.max_train_iou_score = 0
+        self.max_val_iou_score = 0
         self.preprocessing_fn = smp.encoders.get_preprocessing_fn(self.encoder, self.encoder_weights)
         # training params
         self.learning_rate = 1e-4
         self.batch_size = 8
         self.epochs = 1
         self.time0 = time()
-        #self.tb = SummaryWriter(log_dir=f'al_runs/{time()}') # tensorboard
+        #self.tb = SummaryWriter(log_dir=f'al_runs/train_{time()}') # tensorboard
 
     @staticmethod
     def arch_selection_function(name):
@@ -120,7 +119,7 @@ class SegModel:
               valid_masks_paths,
               Dataset=CamVid,
               verbose=False):
-
+    
         if self.model is None:
             print('Creating new model')
             self.create_model()
@@ -144,7 +143,7 @@ class SegModel:
         # LR scheduler
         lr_scheduler = StepLR(optimizer, step_size=1, gamma=0.5)
         # train loop
-        max_score = 0
+        train_max_score = 0; val_max_score = 0
         for i in range(0, self.epochs):
             if verbose:
                 print('\nEpoch:', i, 'LR:', lr_scheduler.get_last_lr())
@@ -152,17 +151,20 @@ class SegModel:
             valid_logs = valid_epoch.run(valid_loader)
             # do something (save model, change lr, etc.)
             lr_scheduler.step() # decay lr
-            if max_score < valid_logs['iou_score']:
-                max_score = valid_logs['iou_score']
+            if val_max_score < valid_logs['iou_score']:
+                val_max_score = valid_logs['iou_score']
                 torch.save(self.model, './best_model.pth')
                 if verbose: print('Model saved!')
+            if train_max_score < train_logs['iou_score']:
+                train_max_score = train_logs['iou_score']
             # tensorboard logging
-            #self.tb.add_scalar('Valid_Dice_Loss vs Time', valid_logs['dice_loss'], time()-self.time0)
-            #self.tb.add_scalar('Train_Dice_Loss vs Time', train_logs['dice_loss'], time()-self.time0)
-            #self.tb.add_scalar('Valid_IoU vs Time', valid_logs['iou_score'], time()-self.time0)
-            #self.tb.add_scalar('Train_IoU vs Time', train_logs['iou_score'], time()-self.time0)
+            # self.tb.add_scalar('Valid_Dice_Loss vs Time', valid_logs['dice_loss'], time()-self.time0)
+            # self.tb.add_scalar('Train_Dice_Loss vs Time', train_logs['dice_loss'], time()-self.time0)
+            # self.tb.add_scalar('Valid_IoU vs Time', valid_logs['iou_score'], time()-self.time0)
+            # self.tb.add_scalar('Train_IoU vs Time', train_logs['iou_score'], time()-self.time0)
         # update model with the best saved
-        self.max_iou_score = max_score
+        self.max_val_iou_score = val_max_score
+        self.max_train_iou_score = train_max_score
         self.model = torch.load('./best_model.pth')
         
     def predict(self, image_paths):

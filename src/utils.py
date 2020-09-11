@@ -41,6 +41,7 @@ def find_common_elements(list1, list2):
     return list(set(list1).intersection(list2))
 
 def get_camvid_paths(DATA_DIR='./data/CamVid/'):
+    # CamVid directories
     x_train_dir = os.path.join(DATA_DIR, 'train')
     y_train_dir = os.path.join(DATA_DIR, 'trainannot')
 

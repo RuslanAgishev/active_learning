@@ -39,6 +39,8 @@ def al_experiment(model_name,
     # define model from its name
     model = SegModel(model_name, classes=SEMSEG_CLASSES)
     model.epochs = MODEL_TRAIN_EPOCHS
+    model.batch_size = BATCH_SIZE
+    model.learning_rate = INITIAL_LR
     # define samples selection function from its name
     samples_selection_fn = sample_selection_function(samples_selection_str)
     
@@ -70,11 +72,12 @@ def al_experiment(model_name,
                     verbose=verbose_train)
 
         # remeber results
-        print(f'IoU so far: {model.max_iou_score}')
-        IoUs.append(model.max_iou_score)
+        print(f'IoU so far: {model.max_val_iou_score}')
+        IoUs.append(model.max_val_iou_score)
         N_train_samples.append(len(X_train_paths_part))
         
-        tb.add_scalar('Valid IoU vs N train images', model.max_iou_score, len(X_train_paths_part))
+        tb.add_scalar('Train IoU vs N train images', model.max_train_iou_score, len(X_train_paths_part))
+        tb.add_scalar('Valid IoU vs N train images', model.max_val_iou_score, len(X_train_paths_part))
 
         if len(X_test) < k:
             print('\nNo more images in Unlabelled set')
@@ -177,14 +180,26 @@ def main():
     plt.savefig('results.png')
 
 
-MAX_QUEERY_IMAGES = 250 # 220 # maximum number of images to train on during AL loop
+MAX_QUEERY_IMAGES = 6900 # 220 # maximum number of images to train on during AL loop
 MODEL_TRAIN_EPOCHS = 1 # 5 # number of epochs to train a model during one AL cicle
-INITIAL_N_TRAIN_IMAGES = 20 # 20, initial number of accessible labelled images
-NUM_UNCERTAIN_IMAGES = [20]#, 20]#, 40, 60] # k: number of uncertain images to label at each AL cicle
-SAMPLES_SELECTIONS = ['Random']#, 'Margin', 'Entropy']
+BATCH_SIZE = 8
+INITIAL_LR = 1e-4
+INITIAL_N_TRAIN_IMAGES = 100 # 20, initial number of accessible labelled images
+NUM_UNCERTAIN_IMAGES = [6800, 100, 400, 800] #, 100] # k: number of uncertain images to label at each AL cicle
+SAMPLES_SELECTIONS = ['Random', 'Margin', 'Entropy']
 MODELS = ['Unet']#, 'Linknet', 'FPN', 'PSPNet']
 SEMSEG_CLASSES = ['road', 'car']
-DATASET_TYPE = CamVid # 'BDD100K' or 'CamVid'
+DATASET_TYPE = BDD100K # 'BDD100K' or 'CamVid'
+
+# BDD100K classes:
+# ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
+# 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
+# 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
+
+# CamVid classes:
+# ['sky', 'building', 'pole', 'road', 'pavement', 
+# 'tree', 'signsymbol', 'fence', 'car', 
+# 'pedestrian', 'bicyclist', 'unlabelled']
 
 ### Load data
 if DATASET_TYPE == CamVid:
