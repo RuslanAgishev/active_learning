@@ -6,7 +6,9 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from utils import visualize, pickle_load, pickle_save
+from utils import visualize
+from utils import pickle_load, pickle_save
+from utils import get_bdd_paths, get_camvid_paths
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
@@ -20,26 +22,6 @@ from anomaly_detection import sample_selection_function
 from dataset import CamVid, BDD100K
 
 
-### Load data
-# BDD100K directories
-DATA_DIR = '/home/ruslan/datasets/bdd100k/seg/'
-x_train_dir = os.path.join(DATA_DIR, 'images/train')
-y_train_dir = os.path.join(DATA_DIR, 'labels/train')
-
-x_valid_dir = os.path.join(DATA_DIR, 'images/val')
-y_valid_dir = os.path.join(DATA_DIR, 'labels/val')
-
-x_test_dir = os.path.join(DATA_DIR, 'images/test')
-
-# all data paths
-X_train_paths = np.array([os.path.join(x_train_dir, image_name) for image_name in os.listdir(x_train_dir)])
-y_train_paths = np.array([os.path.join(y_train_dir, image_name) for image_name in os.listdir(y_train_dir)])
-
-X_valid_paths = np.array([os.path.join(x_valid_dir, image_name) for image_name in os.listdir(x_valid_dir)])
-y_valid_paths = np.array([os.path.join(y_valid_dir, image_name) for image_name in os.listdir(y_valid_dir)])
-
-X_test_paths = np.array([os.path.join(x_test_dir, image_name) for image_name in os.listdir(x_test_dir)])
-
 ### Active Learning experiment
 # 
 # - X_train, y_train: is used partially to train a model
@@ -51,7 +33,7 @@ def al_experiment(model_name,
                   experiment_name,
                   visualize_most_uncertain=False,
                   verbose_train=False,
-                  random_seed=0):
+                  random_seed=1):
 
     tb = SummaryWriter(log_dir=f'runs/{experiment_name}')
     # define model from its name
@@ -84,7 +66,7 @@ def al_experiment(model_name,
                     y_train_paths_part,
                     X_valid_paths,
                     y_valid_paths,
-                    Dataset=BDD100K,
+                    Dataset=DATASET_TYPE,
                     verbose=verbose_train)
 
         # remeber results
@@ -195,13 +177,22 @@ def main():
     plt.savefig('results.png')
 
 
-MAX_QUEERY_IMAGES = 2000 # 220 # maximum number of images to train on during AL loop
-MODEL_TRAIN_EPOCHS = 2 # 5 # number of epochs to train a model during one AL cicle
-INITIAL_N_TRAIN_IMAGES = 1000 # 20, initial number of accessible labelled images
+MAX_QUEERY_IMAGES = 2500 # 220 # maximum number of images to train on during AL loop
+MODEL_TRAIN_EPOCHS = 1 # 5 # number of epochs to train a model during one AL cicle
+INITIAL_N_TRAIN_IMAGES = 500 # 20, initial number of accessible labelled images
 NUM_UNCERTAIN_IMAGES = [500]#, 20]#, 40, 60] # k: number of uncertain images to label at each AL cicle
 SAMPLES_SELECTIONS = ['Random']#, 'Margin', 'Entropy']
 MODELS = ['Unet']#, 'Linknet', 'FPN', 'PSPNet']
-SEMSEG_CLASSES = ['road', 'sidewalk']
+SEMSEG_CLASSES = ['road', 'car']
+DATASET_TYPE = BDD100K # 'BDD100K' or 'CamVid'
+
+### Load data
+if DATASET_TYPE == CamVid:
+    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(DATA_DIR='./data/CamVid/')
+elif DATASET_TYPE == BDD100K:
+    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/')
+else:
+    print('Choose DATASET_TYPE="CamVid" or "BDD100K"')
 
 if __name__=='__main__':
     main()

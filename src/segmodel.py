@@ -17,7 +17,7 @@ class SegModel:
     """
     def __init__(self,
                  name='Unet',
-                 encoder='resnet18',
+                 encoder='resnet34',
                  encoder_weights='imagenet',
                  classes=['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
                          'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',

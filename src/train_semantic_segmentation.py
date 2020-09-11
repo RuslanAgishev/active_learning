@@ -7,36 +7,32 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from dataset import BDD100K
+from dataset import BDD100K, CamVid
 from segmodel import SegModel
+from utils import get_bdd_paths, get_camvid_paths
 
 
-DATA_DIR = '/home/ruslan/datasets/bdd100k/seg/'
-x_train_dir = os.path.join(DATA_DIR, 'images/train')
-y_train_dir = os.path.join(DATA_DIR, 'labels/train')
+DATASET_TYPE = CamVid # 'BDD100K' or 'CamVid'
 
-x_valid_dir = os.path.join(DATA_DIR, 'images/val')
-y_valid_dir = os.path.join(DATA_DIR, 'labels/val')
+### Load data
+if DATASET_TYPE == CamVid:
+    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(DATA_DIR='./data/CamVid/')
+elif DATASET_TYPE == BDD100K:
+    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/')
+else:
+    print('Choose DATASET_TYPE="CamVid" or "BDD100K"')
 
-x_test_dir = os.path.join(DATA_DIR, 'images/test')
+# BDD100K classes:
+# 'road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
+# 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
+# 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
 
-# all data paths
-X_train_paths = np.sort([os.path.join(x_train_dir, image_name) for image_name in os.listdir(x_train_dir)])
-y_train_paths = np.sort([os.path.join(y_train_dir, image_name) for image_name in os.listdir(y_train_dir)])
+classes = ['road', 'car']
 
-X_valid_paths = np.sort([os.path.join(x_valid_dir, image_name) for image_name in os.listdir(x_valid_dir)])
-y_valid_paths = np.sort([os.path.join(y_valid_dir, image_name) for image_name in os.listdir(y_valid_dir)])
-
-X_test_paths = np.sort([os.path.join(x_test_dir, image_name) for image_name in os.listdir(x_test_dir)])
-
-
-classes = ['road', 'sidewalk']#, 'building', 'wall', 'fence', 'pole', 'traffic light',
-           # 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
-           # 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
 unet = SegModel('Unet', classes=classes)
 unet.epochs = 5
 unet.learning_rate = 1e-4
 unet.batch_size = 8
 
-unet.train(X_train_paths, y_train_paths, X_valid_paths, y_valid_paths, BDD100K, verbose=True)
+unet.train(X_train_paths, y_train_paths, X_valid_paths, y_valid_paths, DATASET_TYPE, verbose=True)
 
