@@ -1,5 +1,6 @@
 ## AL implementations list
 
+- [ViewAL](https://github.com/nihalsid/ViewAL)
 - [pytorch_active_learning](https://github.com/rmunro/pytorch_active_learning)
 - [google/active-learning](https://github.com/google/active-learning)
 - [AL for Medical Imaging Segmentation](https://github.com/marc-gorriz/CEAL-Medical-Image-Segmentation)
