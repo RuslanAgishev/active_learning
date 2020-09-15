@@ -51,6 +51,6 @@ data
 results.png
 
 # tensorboard logs
-# src/tb_*
+src/tb_*
 
 

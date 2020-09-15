@@ -11,6 +11,7 @@ from dataset import CamVid, BDD100K
 from augmentations import get_preprocessing
 from augmentations import get_training_augmentation
 from augmentations import get_validation_augmentation
+from copy import deepcopy
 
 
 class SegModel:
@@ -22,6 +23,7 @@ class SegModel:
                  encoder_weights='imagenet',
                  classes=['road', 'car']):
         # model params
+        self.name = name
         self.arch = self.arch_selection_function(name)
         self.encoder = encoder
         self.encoder_weights = encoder_weights
@@ -121,7 +123,7 @@ class SegModel:
               verbose=False):
     
         if self.model is None:
-            print('Creating new model')
+            print(f'Creating new model: {self.name}_{self.encoder}')
             self.create_model()
         # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
         # IoU/Jaccard score - https://en.wikipedia.org/wiki/Jaccard_index
@@ -173,7 +175,7 @@ class SegModel:
             # input preprocessing
             image_raw = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
             image = np.copy(image_raw)
-            image = cv2.resize(image, (352, 640))
+            image = cv2.resize(image, (320, 320))
             preprocessing = get_preprocessing(self.preprocessing_fn)
             image = preprocessing(image=image)['image']
             images.append(image)

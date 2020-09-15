@@ -9,10 +9,10 @@ def normalize(x):
     x = (x - x_min) / (x_max - x_min)
     x = x.clip(0, 1)
     return x
-def entropy(mask_np, eps=1e-9):
+def entropy(mask_np, axis=0, eps=1e-12):
     mask_np = normalize(mask_np)
     # mask_np.shape = (3, N, M)
-    e = np.mean( (-mask_np * np.log2(mask_np+eps)).sum(axis=0) )
+    e = np.mean( (-mask_np * np.log2(mask_np+eps)).sum(axis=axis) )
     return e
 def entropy_selection(X_test_paths, n_samples, model):
     # do inference and compute entropy for each image
@@ -56,8 +56,36 @@ def random_samples_selection(X, n_samples, model=None):
     selected_images_indexes = np.random.choice(len(X), n_samples, replace=False)
     return selected_images_indexes
 
+def one_hot(mask, axis=0):
+    # mask.shape = (c, H, W)
+    return (mask == np.max(mask, axis=axis)).astype(np.int)
+def vote_entropy(masks, axis=0):
+    # masks = [mask_np1, mask_np2, ..., mask_npN]
+    # mask_npN.shape = (c, H, W)
+    one_hot_sum = 0
+    for mask in masks:
+        one_hot_sum += one_hot(mask, axis=axis)
+    one_hot_mean = one_hot_sum / len(masks)
+    return entropy(one_hot_mean, axis=axis)
+def vote_entropy_selection(X_test_paths, n_samples, models):
+    # do inference and compute entropy for each image
+    vote_entropies = []
+    print('Inference on unlabelled data...')
+    for img_path in tqdm(X_test_paths):
+        masks = [model.predict([img_path]).cpu().numpy().squeeze() for model in models]
+        vote_entropies.append(vote_entropy(masks))
+    # Model is mostly uncertain in images with High entropy
+    #print('Choosing uncertain images to label...')
+    selected_images_indexes = np.argsort(vote_entropies)[::-1][:n_samples]
+    print(f'Min Vote entropy: {np.min(vote_entropies):.3f}, \
+            Mean Vote entropy: {np.mean(vote_entropies):.3f}, \
+            Max Vote entropy: {np.max(vote_entropies):.3f}')
+    return selected_images_indexes
+
+
 def sample_selection_function(name):
     if name=='Random': return random_samples_selection
     elif name=='Entropy': return entropy_selection
     elif name=='Margin': return margin_selection
-    else: print('Supported sample selection functions: Random, Entropy, Margin')
+    elif name=='Committee': return vote_entropy_selection
+    else: print('Supported sample selection functions: Random, Entropy, Margin, Committee')
