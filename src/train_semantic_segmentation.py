@@ -12,7 +12,7 @@ from segmodel import SegModel
 from utils import get_bdd_paths, get_camvid_paths
 
 
-DATASET_TYPE = BDD100K # 'BDD100K' or 'CamVid'
+DATASET_TYPE = BDD100K # BDD100K or CamVid
 
 ### Load data
 if DATASET_TYPE == CamVid:
@@ -34,8 +34,8 @@ else:
 
 classes = ['road', 'car']
 
-unet = SegModel('Unet', classes=classes)
-unet.epochs = 1
+unet = SegModel('Unet', encoder='resnet34', classes=classes)
+unet.epochs = 10
 unet.learning_rate = 1e-4
 unet.batch_size = 8
 

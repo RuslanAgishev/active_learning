@@ -39,7 +39,7 @@ class SegModel:
         self.batch_size = 8
         self.epochs = 1
         self.time0 = time()
-        #self.tb = SummaryWriter(log_dir=f'al_runs/train_{time()}') # tensorboard
+        self.tb = SummaryWriter(log_dir=f'tb_runs/train_{name}_{encoder}_{time()}') # tensorboard
 
     @staticmethod
     def arch_selection_function(name):
@@ -158,10 +158,10 @@ class SegModel:
             if train_max_score < train_logs['iou_score']:
                 train_max_score = train_logs['iou_score']
             # tensorboard logging
-            # self.tb.add_scalar('Valid_Dice_Loss vs Time', valid_logs['dice_loss'], time()-self.time0)
-            # self.tb.add_scalar('Train_Dice_Loss vs Time', train_logs['dice_loss'], time()-self.time0)
-            # self.tb.add_scalar('Valid_IoU vs Time', valid_logs['iou_score'], time()-self.time0)
-            # self.tb.add_scalar('Train_IoU vs Time', train_logs['iou_score'], time()-self.time0)
+            self.tb.add_scalar('Valid_Dice_Loss vs Time', valid_logs['dice_loss'], time()-self.time0)
+            self.tb.add_scalar('Train_Dice_Loss vs Time', train_logs['dice_loss'], time()-self.time0)
+            self.tb.add_scalar('Valid_IoU vs Time', valid_logs['iou_score'], time()-self.time0)
+            self.tb.add_scalar('Train_IoU vs Time', train_logs['iou_score'], time()-self.time0)
         # update model with the best saved
         self.max_val_iou_score = val_max_score
         self.max_train_iou_score = train_max_score
