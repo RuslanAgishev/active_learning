@@ -38,6 +38,7 @@ class SegModel:
         self.preprocessing_fn = smp.encoders.get_preprocessing_fn(self.encoder, self.encoder_weights)
         # training params
         self.learning_rate = 1e-4
+        self.weight_decay = 0.5
         self.batch_size = 8
         self.epochs = 1
         self.time0 = time()
@@ -143,7 +144,7 @@ class SegModel:
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=12)
         valid_loader = DataLoader(valid_dataset, batch_size=1, shuffle=False, num_workers=4)
         # LR scheduler
-        lr_scheduler = StepLR(optimizer, step_size=1, gamma=0.5)
+        lr_scheduler = StepLR(optimizer, step_size=1, gamma=self.weight_decay)
         # train loop
         train_max_score = 0; val_max_score = 0
         for i in range(0, self.epochs):

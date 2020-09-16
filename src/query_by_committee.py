@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from utils import visualize
 from utils import pickle_load, pickle_save
 from utils import get_bdd_paths, get_camvid_paths
+from utils import find_common_elements
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
@@ -21,21 +22,36 @@ from anomaly_detection import sample_selection_function
 # datasets wrapper
 from dataset import CamVid, BDD100K
 from datetime import datetime
+from copy import deepcopy
 
 
-DATASET_TYPE = CamVid
-MAX_QUEERY_IMAGES = 120 # 220 # maximum number of images to train on during AL loop
+DATASET_TYPE = BDD100K
+MAX_QUEERY_IMAGES = 1200 # 220 # maximum number of images to train on during AL loop
 MODEL_TRAIN_EPOCHS = 2 # 5 # number of epochs to train a model during one AL cicle
 BATCH_SIZE = 16 #! should be 8 for DeepLab training
 INITIAL_LR = 1e-4
-INITIAL_N_TRAIN_IMAGES = 20 # 20, initial number of accessible labelled images
-NUM_UNCERTAIN_IMAGES = [20] #, 100] # k: number of uncertain images to label at each AL cicle
+WEIGHT_DECAY = 1
+INITIAL_N_TRAIN_IMAGES = 200 # 20, initial number of accessible labelled images
+NUM_UNCERTAIN_IMAGES = [200]#, 400] #, 100] # k: number of uncertain images to label at each AL cicle
 SEMSEG_CLASSES = ['road', 'car']
 SAMPLES_SELECTIONS = ['Random', 'Committee']
 ENSEMBLE_SIZE = 3
 VISUALIZE_UNCERTAIN = False
-VERBOSE_TRAIN = False
+VERBOSE_TRAIN = True
 
+def models_ensemble(n_models=4):
+    model1 = SegModel('Unet', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
+    model2 = SegModel('FPN', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
+    model3 = SegModel('PAN', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
+    model4 = SegModel('DeepLabV3', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
+    # choose from defined models
+    models = [model1, model2, model3, model4]
+    models = models[:n_models]
+    for model in models:
+        model.epochs = MODEL_TRAIN_EPOCHS
+        model.batch_size = BATCH_SIZE
+        model.learning_rate = INITIAL_LR
+    return models
 
 def al_experiment(models,
                   k,
@@ -58,8 +74,8 @@ def al_experiment(models,
     
     # choose first data batch to train on
     np.random.seed(random_seed)
-    X = np.copy(X_train_paths)
-    y = np.copy(y_train_paths)
+    X = deepcopy(X_train_paths)
+    y = deepcopy(y_train_paths)
     
     initial_selection = np.random.choice(len(X), INITIAL_N_TRAIN_IMAGES, replace=False) # k
     X_train_paths_part = X[initial_selection]
@@ -79,6 +95,7 @@ def al_experiment(models,
         print('Unlabelled set size: ', len(X_test))
         for model in models:
             print(f'\nTraining a model for {model.epochs} epochs...')
+            model.weight_decay = WEIGHT_DECAY
             model.train(X_train_paths_part,
                         y_train_paths_part,
                         X_valid_paths,
@@ -119,14 +136,16 @@ def al_experiment(models,
                     plt.figure(figsize=(16, 5))
                     title = f'{model.name}_{model.encoder}_N_train_{len(X_train_paths_part)}'
                     print(title)
-                    plt.title(title)
                     visualize(image=image, road_mask=mask_np[0,...], car_mask=mask_np[1,...])
+                    plt.title(title)
                     plt.show()
 
         # Add labels for uncertain images to train data
         #print('Labelled set before: ', len(X_train_paths_part))
         X_train_paths_part = np.concatenate([X_train_paths_part, X_test[selected_images_indexes]])
         y_train_paths_part = np.concatenate([y_train_paths_part, y_test[selected_images_indexes]])
+        # X_train_paths_part = X_test[selected_images_indexes]
+        # y_train_paths_part = y_test[selected_images_indexes]
         #print('Labelled set after: ', len(X_train_paths_part))
 
         # Remove labelled data from validation set
@@ -138,21 +157,6 @@ def al_experiment(models,
     print(f'Max IoU score: {np.max(IoUs)}')
     print('----------------------------------------\n')
     return IoUs, N_train_samples
-
-
-def models_ensemble(n_models=4):
-    model1 = SegModel('Unet', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
-    model2 = SegModel('FPN', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
-    model3 = SegModel('PAN', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
-    model4 = SegModel('DeepLabV3', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
-    # choose from defined models
-    models = [model1, model2, model3, model4]
-    models = models[:n_models]
-    for model in models:
-        model.epochs = MODEL_TRAIN_EPOCHS
-        model.batch_size = BATCH_SIZE
-        model.learning_rate = INITIAL_LR
-    return models
 
 
 results = {}

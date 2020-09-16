@@ -28,8 +28,8 @@ class SemSegDataset(BaseDataset):
             augmentation=None, 
             preprocessing=None,
     ):
-        self.images_fps = images_paths
-        self.masks_fps = masks_paths
+        self.images_fps = np.sort(images_paths)
+        self.masks_fps = np.sort(masks_paths)
         
         # convert str names to class values on masks
         self.class_values = [self.ALL_CLASSES.index(cls.lower()) for cls in classes]
