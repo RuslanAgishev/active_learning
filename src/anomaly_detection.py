@@ -68,12 +68,20 @@ def vote_entropy(masks, axis=0):
         # summ += one_hot(mask, axis=axis)
     mean = summ / len(masks)
     return entropy(mean, axis=axis)
-def vote_entropy_selection(X_test_paths, n_samples, models):
+def vote_entropy_selection(X_test_paths, n_samples, models, iou_threshold=0.4):
+    # delete weak models based on IoU iou_threshold
+    chosen_models = []
+    for model in models:
+        if model.max_val_iou_score > iou_threshold:
+            chosen_models.append(model)
+    if len(chosen_models) == 0:
+        print('Models are not trained good enough')
+        chosen_models = models
     # do inference and compute entropy for each image
     vote_entropies = []
     print('Inference on unlabelled data...')
     for img_path in tqdm(X_test_paths):
-        masks = [model.predict([img_path]).cpu().numpy().squeeze() for model in models]
+        masks = [model.predict([img_path]).cpu().numpy().squeeze() for model in chosen_models]
         vote_entropies.append(vote_entropy(masks))
     # Model is mostly uncertain in images with High entropy
     #print('Choosing uncertain images to label...')

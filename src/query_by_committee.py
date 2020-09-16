@@ -27,19 +27,20 @@ from copy import deepcopy
 
 DATASET_TYPE = BDD100K
 MAX_QUEERY_IMAGES = 1200 # 220 # maximum number of images to train on during AL loop
-MODEL_TRAIN_EPOCHS = 2 # 5 # number of epochs to train a model during one AL cicle
+MODEL_TRAIN_EPOCHS = [1]#, 2, 3] # 5 # number of epochs to train a model during one AL cicle
 BATCH_SIZE = 16 #! should be 8 for DeepLab training
 INITIAL_LR = 1e-4
 WEIGHT_DECAY = 1
 INITIAL_N_TRAIN_IMAGES = 200 # 20, initial number of accessible labelled images
-NUM_UNCERTAIN_IMAGES = [200]#, 400] #, 100] # k: number of uncertain images to label at each AL cicle
+NUM_UNCERTAIN_IMAGES = [200]#, 400, 600]#, 400] #, 100] # k: number of uncertain images to label at each AL cicle
 SEMSEG_CLASSES = ['road', 'car']
-SAMPLES_SELECTIONS = ['Random', 'Committee']
+SAMPLES_SELECTIONS = ['Committee', 'Random']
 ENSEMBLE_SIZE = 3
 VISUALIZE_UNCERTAIN = False
 VERBOSE_TRAIN = True
 
-def models_ensemble(n_models=4):
+
+def models_ensemble(epochs, n_models=4):
     model1 = SegModel('Unet', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
     model2 = SegModel('FPN', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
     model3 = SegModel('PAN', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
@@ -48,7 +49,7 @@ def models_ensemble(n_models=4):
     models = [model1, model2, model3, model4]
     models = models[:n_models]
     for model in models:
-        model.epochs = MODEL_TRAIN_EPOCHS
+        model.epochs = epochs
         model.batch_size = BATCH_SIZE
         model.learning_rate = INITIAL_LR
     return models
@@ -144,8 +145,6 @@ def al_experiment(models,
         #print('Labelled set before: ', len(X_train_paths_part))
         X_train_paths_part = np.concatenate([X_train_paths_part, X_test[selected_images_indexes]])
         y_train_paths_part = np.concatenate([y_train_paths_part, y_test[selected_images_indexes]])
-        # X_train_paths_part = X_test[selected_images_indexes]
-        # y_train_paths_part = y_test[selected_images_indexes]
         #print('Labelled set after: ', len(X_train_paths_part))
 
         # Remove labelled data from validation set
@@ -168,12 +167,12 @@ for samples_selection_name in SAMPLES_SELECTIONS:
     results[samples_selection_name] = {}
     
     # choose number of samples to select for labelling from inference results
-    for k in NUM_UNCERTAIN_IMAGES:
+    for k, epochs in zip(NUM_UNCERTAIN_IMAGES, MODEL_TRAIN_EPOCHS):
         print(f'\nNumber of samples to label on one iteration, k={k}')
         print('------------------------------------')
 
         # define models committee
-        models = models_ensemble(n_models=ENSEMBLE_SIZE)
+        models = models_ensemble(epochs, n_models=ENSEMBLE_SIZE)
             
         results[samples_selection_name][str(k)] = {}
 

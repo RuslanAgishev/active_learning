@@ -72,12 +72,12 @@ class CamVid(SemSegDataset):
     """CamVid Datatset.
     """
     ALL_CLASSES = ['sky', 'building', 'pole', 'road', 'pavement', 
-               'tree', 'signsymbol', 'fence', 'car', 
-               'pedestrian', 'bicyclist', 'unlabelled']
+                   'tree', 'signsymbol', 'fence', 'car', 
+                   'pedestrian', 'bicyclist', 'unlabelled']
 
 class BDD100K(SemSegDataset):
     """Berkeley Deep Drive Dataset.
     """
     ALL_CLASSES = ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
-		       'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
-		       'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'void']
+    		       'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
+    		       'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'void']
