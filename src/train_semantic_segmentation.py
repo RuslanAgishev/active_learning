@@ -12,7 +12,7 @@ from segmodel import SegModel
 from utils import get_bdd_paths, get_camvid_paths
 
 
-DATASET_TYPE = BDD100K # BDD100K or CamVid
+DATASET_TYPE = CamVid # BDD100K or CamVid
 
 ### Load data
 if DATASET_TYPE == CamVid:
@@ -34,10 +34,20 @@ else:
 
 classes = ['road', 'car']
 
-unet = SegModel('Unet', encoder='resnet34', classes=classes)
-unet.epochs = 10
-unet.learning_rate = 1e-4
-unet.batch_size = 8
+model_names = ['Unet', 'Linknet', 'FPN', 'PSPNet', 'PAN', 'DeepLabV3']
+ious = []
 
-unet.train(X_train_paths, y_train_paths, X_valid_paths, y_valid_paths, DATASET_TYPE, verbose=True)
+for model_name in model_names:
+    model = SegModel(model_name, encoder='mobilenet_v2', classes=classes)
+    model.epochs = 5
+    model.learning_rate = 1e-4
+    model.batch_size = 8
 
+    model.train(X_train_paths, y_train_paths, X_valid_paths, y_valid_paths, DATASET_TYPE, verbose=True)
+    iou = model.max_val_iou_score
+    ious.append(iou)
+    print(f'\n{model_name}_{model.encoder} IoU score: {iou}')
+
+print('\nResults:')
+for i in range(len(model_names)):
+    print(f'\n{model_names[i]} IoU score: {ious[i]}')

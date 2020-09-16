@@ -25,9 +25,9 @@ def entropy_selection(X_test_paths, n_samples, model):
     # Model is mostly uncertain in images with High entropy
     #print('Choosing uncertain images to label...')
     selected_images_indexes = np.argsort(entropies)[::-1][:n_samples]
-    print(f'Min entropy: {np.min(entropies):.2f}, \
-            Mean Entropy: {np.mean(entropies):.2f}, \
-            Max entropy: {np.max(entropies):.2f}')
+    print(f'Min entropy: {np.min(entropies):.3f}, \
+            Mean entropy: {np.mean(entropies):.3f}, \
+            Max entropy: {np.max(entropies):.3f}')
     return selected_images_indexes
 
 def margin(mask_np):
@@ -47,9 +47,9 @@ def margin_selection(X_test_paths, n_samples, model):
     # Model is mostly uncertain in images with Low margin
     #print('Choosing uncertain images to label...')
     selected_images_indexes = np.argsort(margins)[:n_samples]
-    print(f'Min margin: {np.min(margins):.2f}, \
-            Mean margin: {np.mean(margins):.2f}, \
-            Max margin: {np.max(margins):.2f}')
+    print(f'Min margin: {np.min(margins):.3f}, \
+            Mean margin: {np.mean(margins):.3f}, \
+            Max margin: {np.max(margins):.3f}')
     return selected_images_indexes
 
 def random_samples_selection(X, n_samples, model=None):
@@ -62,11 +62,12 @@ def one_hot(mask, axis=0):
 def vote_entropy(masks, axis=0):
     # masks = [mask_np1, mask_np2, ..., mask_npN]
     # mask_npN.shape = (c, H, W)
-    one_hot_sum = 0
+    summ = np.zeros_like(masks[0])
     for mask in masks:
-        one_hot_sum += one_hot(mask, axis=axis)
-    one_hot_mean = one_hot_sum / len(masks)
-    return entropy(one_hot_mean, axis=axis)
+        summ += mask
+        # summ += one_hot(mask, axis=axis)
+    mean = summ / len(masks)
+    return entropy(mean, axis=axis)
 def vote_entropy_selection(X_test_paths, n_samples, models):
     # do inference and compute entropy for each image
     vote_entropies = []

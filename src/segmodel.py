@@ -41,7 +41,7 @@ class SegModel:
         self.batch_size = 8
         self.epochs = 1
         self.time0 = time()
-        self.tb = SummaryWriter(log_dir=f'tb_runs/train_{name}_{encoder}_{time()}') # tensorboard
+        # self.tb = SummaryWriter(log_dir=f'tb_runs/train_{name}_{encoder}_{time()}') # tensorboard
 
     @staticmethod
     def arch_selection_function(name):
@@ -53,12 +53,12 @@ class SegModel:
             arch = smp.FPN
         elif name =='PSPNet':
             arch = smp.PSPNet
-    #     elif name =='PAN':
-    #         arch = smp.PAN
-    #     elif name =='DeepLabV3':
-    #         arch = smp.DeepLabV3
+        elif name =='PAN':
+            arch = smp.PAN
+        elif name =='DeepLabV3':
+            arch = smp.DeepLabV3
         else:
-            print('Supported sample selection functions: Unet, Linknet, FPN, PSPNet')
+            print('Supported sample selection functions: Unet, Linknet, FPN, PSPNet, PAN, DeepLabV3')
             return None
         return arch
 
@@ -155,19 +155,19 @@ class SegModel:
             lr_scheduler.step() # decay lr
             if val_max_score < valid_logs['iou_score']:
                 val_max_score = valid_logs['iou_score']
-                torch.save(self.model, './best_model.pth')
+                torch.save(self.model, f'./{self.name}_{self.encoder}_best_model.pth')
                 if verbose: print('Model saved!')
             if train_max_score < train_logs['iou_score']:
                 train_max_score = train_logs['iou_score']
             # tensorboard logging
-            self.tb.add_scalar('Valid_Dice_Loss vs Time', valid_logs['dice_loss'], time()-self.time0)
-            self.tb.add_scalar('Train_Dice_Loss vs Time', train_logs['dice_loss'], time()-self.time0)
-            self.tb.add_scalar('Valid_IoU vs Time', valid_logs['iou_score'], time()-self.time0)
-            self.tb.add_scalar('Train_IoU vs Time', train_logs['iou_score'], time()-self.time0)
+            # self.tb.add_scalar('Valid_Dice_Loss vs Time', valid_logs['dice_loss'], time()-self.time0)
+            # self.tb.add_scalar('Train_Dice_Loss vs Time', train_logs['dice_loss'], time()-self.time0)
+            # self.tb.add_scalar('Valid_IoU vs Time', valid_logs['iou_score'], time()-self.time0)
+            # self.tb.add_scalar('Train_IoU vs Time', train_logs['iou_score'], time()-self.time0)
         # update model with the best saved
         self.max_val_iou_score = val_max_score
         self.max_train_iou_score = train_max_score
-        self.model = torch.load('./best_model.pth')
+        self.model = torch.load(f'./{self.name}_{self.encoder}_best_model.pth')
         
     def predict(self, image_paths):
         images = []
