@@ -77,6 +77,7 @@ def vote_entropy_selection(X_test_paths, n_samples, models, iou_threshold=0.4):
     if len(chosen_models) == 0:
         print('Models are not trained good enough')
         chosen_models = models
+    print(f'Models in ensemble: {len(chosen_models)}')
     # do inference and compute entropy for each image
     vote_entropies = []
     print('Inference on unlabelled data...')
@@ -84,7 +85,7 @@ def vote_entropy_selection(X_test_paths, n_samples, models, iou_threshold=0.4):
         masks = [model.predict([img_path]).cpu().numpy().squeeze() for model in chosen_models]
         vote_entropies.append(vote_entropy(masks))
     # Model is mostly uncertain in images with High entropy
-    #print('Choosing uncertain images to label...')
+    # print('Choosing uncertain images to label...')
     selected_images_indexes = np.argsort(vote_entropies)[::-1][:n_samples]
     print(f'Min Vote entropy: {np.min(vote_entropies):.3f}, \
             Mean Vote entropy: {np.mean(vote_entropies):.3f}, \

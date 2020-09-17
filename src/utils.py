@@ -78,3 +78,14 @@ def get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/'):
     # X_test_paths = np.array([os.path.join(x_test_dir, image_name) for image_name in os.listdir(x_test_dir)])
     
     return X_train_paths, y_train_paths, X_valid_paths, y_valid_paths
+
+#!pip install gluoncv mxnet-mkl>=1.4.0 --upgrade
+from gluoncv.data import CitySegmentation
+def get_cityscapes_paths(DATA_DIR='/home/ruslan/datasets/Cityscapes/'):
+    train_data = CitySegmentation(root=DATA_DIR, split='train')
+    valid_data = CitySegmentation(root=DATA_DIR, split='val')
+    X_train_paths = train_data.images
+    y_train_paths = train_data.mask_paths
+    X_valid_paths = valid_data.images
+    y_valid_paths = valid_data.mask_paths
+    return X_train_paths, y_train_paths, X_valid_paths, y_valid_paths

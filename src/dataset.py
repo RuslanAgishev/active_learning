@@ -81,3 +81,12 @@ class BDD100K(SemSegDataset):
     ALL_CLASSES = ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
     		       'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
     		       'truck', 'bus', 'train', 'motorcycle', 'bicycle', 'void']
+
+class Cityscapes(SemSegDataset):
+    """Cityscapes Dataset.
+    """
+    ALL_CLASSES = ['unlabeled', 'ego vehicle', 'rectification border', 'out of roi', 'static', 'dynamic',
+                   'ground', 'road', 'sidewalk', 'parking', 'rail track', 'building', 'wall', 'fence',
+                   'guard rail', 'bridge', 'tunnel', 'pole', 'polegroup', 'traffic light', 'traffic sign',
+                   'vegetation', 'terrain', 'sky', 'person', 'rider', 'car', 'truck', 'bus', 'caravan',
+                   'trailer', 'train', 'motorcycle', 'bicycle', 'license plate']
