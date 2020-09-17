@@ -39,16 +39,16 @@ def find_common_elements(list1, list2):
     """
     return list(set(list1).intersection(list2))
 
-def get_camvid_paths(DATA_DIR='./data/CamVid/'):
+def get_camvid_paths(path='/home/ruslan/datasets/CamVid/'):
     # CamVid directories
-    x_train_dir = os.path.join(DATA_DIR, 'train')
-    y_train_dir = os.path.join(DATA_DIR, 'trainannot')
+    x_train_dir = os.path.join(path, 'train')
+    y_train_dir = os.path.join(path, 'trainannot')
 
-    x_valid_dir = os.path.join(DATA_DIR, 'val')
-    y_valid_dir = os.path.join(DATA_DIR, 'valannot')
+    x_valid_dir = os.path.join(path, 'val')
+    y_valid_dir = os.path.join(path, 'valannot')
 
-    # x_test_dir = os.path.join(DATA_DIR, 'test')
-    # y_test_dir = os.path.join(DATA_DIR, 'testannot')
+    # x_test_dir = os.path.join(path, 'test')
+    # y_test_dir = os.path.join(path, 'testannot')
 
     X_train_paths = np.array([os.path.join(x_train_dir, image_name) for image_name in os.listdir(x_train_dir)])
     y_train_paths = np.array([os.path.join(y_train_dir, image_name) for image_name in os.listdir(y_train_dir)])
@@ -60,14 +60,14 @@ def get_camvid_paths(DATA_DIR='./data/CamVid/'):
     return X_train_paths, y_train_paths, X_valid_paths, y_valid_paths
 
 
-def get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/'):
+def get_bdd_paths(path='/home/ruslan/datasets/bdd100k/seg/'):
     # BDD100K directories
-    x_train_dir = os.path.join(DATA_DIR, 'images/train')
-    y_train_dir = os.path.join(DATA_DIR, 'labels/train')
+    x_train_dir = os.path.join(path, 'images/train')
+    y_train_dir = os.path.join(path, 'labels/train')
 
-    x_valid_dir = os.path.join(DATA_DIR, 'images/val')
-    y_valid_dir = os.path.join(DATA_DIR, 'labels/val')
-    # x_test_dir = os.path.join(DATA_DIR, 'images/test')
+    x_valid_dir = os.path.join(path, 'images/val')
+    y_valid_dir = os.path.join(path, 'labels/val')
+    # x_test_dir = os.path.join(path, 'images/test')
 
     # all data paths
     X_train_paths = np.array([os.path.join(x_train_dir, image_name) for image_name in os.listdir(x_train_dir)])
@@ -81,9 +81,9 @@ def get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/'):
 
 #!pip install gluoncv mxnet-mkl>=1.4.0 --upgrade
 from gluoncv.data import CitySegmentation
-def get_cityscapes_paths(DATA_DIR='/home/ruslan/datasets/Cityscapes/'):
-    train_data = CitySegmentation(root=DATA_DIR, split='train')
-    valid_data = CitySegmentation(root=DATA_DIR, split='val')
+def get_cityscapes_paths(path='/home/ruslan/datasets/Cityscapes/'):
+    train_data = CitySegmentation(root=path, split='train')
+    valid_data = CitySegmentation(root=path, split='val')
     X_train_paths = np.array(train_data.images)
     y_train_paths = np.array(train_data.mask_paths)
     X_valid_paths = np.array(valid_data.images)

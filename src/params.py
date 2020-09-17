@@ -1,8 +1,9 @@
 from dataset import CamVid, BDD100K, Cityscapes
 
 
-DATASET_TYPE = CamVid
-MAX_QUEERY_IMAGES = 200 # 220 # maximum number of images to train on during AL loop
+DATASET_TYPE = Cityscapes
+DATA_DIR = '/home/ruslan/datasets/'
+MAX_QUEERY_IMAGES = 1000 # 220 # maximum number of images to train on during AL loop
 MODEL_TRAIN_EPOCHS = [1]#, 2, 3] # 5 # number of epochs to train a model during one AL cicle
 BATCH_SIZE = 16 #! should be 8 for DeepLab training
 INITIAL_LR = 1e-4
@@ -12,7 +13,7 @@ NUM_UNCERTAIN_IMAGES = [200]#, 400, 600]#, 400] #, 100] # k: number of uncertain
 SEMSEG_CLASSES = ['road', 'car']
 SAMPLES_SELECTIONS = ['Committee', 'Random'] #['Random', 'Margin', 'Entropy']
 MODELS = ['Unet']#, 'Linknet', 'FPN', 'PSPNet']
-ENSEMBLE_SIZE = 2
+ENSEMBLE_SIZE = 3
 VISUALIZE_UNCERTAIN = False
 VERBOSE_TRAIN = True
 IMG_HEIGHT, IMG_WIDTH = 320, 320

@@ -10,17 +10,18 @@ from pathlib import Path
 from dataset import BDD100K, CamVid, Cityscapes
 from segmodel import SegModel
 from utils import get_bdd_paths, get_camvid_paths, get_cityscapes_paths
+from params import DATA_DIR
 
 
 DATASET_TYPE = Cityscapes # BDD100K, Cityscapes or CamVid
 
 ### Load data
 if DATASET_TYPE == CamVid:
-    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(DATA_DIR='./data/CamVid/')
+    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(path=os.path.join(DATA_DIR, 'CamVid/'))
 elif DATASET_TYPE == BDD100K:
-    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/')
+    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_bdd_paths(path=os.path.join(DATA_DIR, 'bdd100k/seg/'))
 elif DATASET_TYPE == Cityscapes:
-    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_cityscapes_paths(DATA_DIR='/home/ruslan/datasets/Cityscapes/')
+    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_cityscapes_paths(path=os.path.join(DATA_DIR, 'Cityscapes/'))
 else:
     print('Choose DATASET_TYPE=CamVid, Cityscapes or BDD100K')
 
