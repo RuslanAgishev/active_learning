@@ -35,5 +35,11 @@ Query-by-committee samples selection:
 python src/active_learning_query_by_committee.py
 ```
 
+## Tensorboard logging
+
+```bash
+tensorboard --logdir src/tb_runs/EXPERIMENT_NAME
+```
+
 ## Reference:
 - [J. Prendki, An Introduction to Active Learning, ODSC](https://opendatascience.com/an-introduction-to-active-learning/)
