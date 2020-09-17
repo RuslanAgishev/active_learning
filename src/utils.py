@@ -9,7 +9,7 @@ def pickle_save(fname, data):
     filehandler = open(fname,"wb")
     pickle.dump(data,filehandler)
     filehandler.close() 
-    print('saved', fname, os.getcwd(), os.listdir())
+    print('saved', fname)#, os.getcwd(), os.listdir())
 
 def pickle_load(fname):
     #print(os.getcwd(), os.listdir())

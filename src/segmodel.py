@@ -7,11 +7,11 @@ from torch.utils.data import Dataset as BaseDataset
 from time import time
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.tensorboard import SummaryWriter
-from dataset import CamVid, BDD100K
 from augmentations import get_preprocessing
 from augmentations import get_training_augmentation
 from augmentations import get_validation_augmentation
 from copy import deepcopy
+from params import IMG_HEIGHT, IMG_WIDTH, DATASET_TYPE
 
 
 class SegModel:
@@ -19,7 +19,7 @@ class SegModel:
     """
     def __init__(self,
                  name='Unet',
-                 encoder='resnet34',
+                 encoder='mobilenet_v2',
                  encoder_weights='imagenet',
                  classes=['road', 'car']):
         # model params
@@ -91,7 +91,7 @@ class SegModel:
                         train_masks_paths,
                         valid_images_paths,
                         valid_masks_paths,
-                        Dataset=CamVid):
+                        Dataset=DATASET_TYPE):
         train_dataset = Dataset(
             train_images_paths, 
             train_masks_paths, 
@@ -120,7 +120,7 @@ class SegModel:
               train_masks_paths,
               valid_images_paths,
               valid_masks_paths,
-              Dataset=CamVid,
+              Dataset=DATASET_TYPE,
               verbose=False):
     
         if self.model is None:
@@ -176,7 +176,7 @@ class SegModel:
             # input preprocessing
             image_raw = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
             image = np.copy(image_raw)
-            image = cv2.resize(image, (320, 320))
+            image = cv2.resize(image, (IMG_HEIGHT, IMG_WIDTH))
             preprocessing = get_preprocessing(self.preprocessing_fn)
             image = preprocessing(image=image)['image']
             images.append(image)

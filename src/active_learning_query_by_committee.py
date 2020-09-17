@@ -23,21 +23,7 @@ from anomaly_detection import sample_selection_function
 from dataset import CamVid, BDD100K, Cityscapes
 from datetime import datetime
 from copy import deepcopy
-
-
-DATASET_TYPE = Cityscapes
-MAX_QUEERY_IMAGES = 200 # 220 # maximum number of images to train on during AL loop
-MODEL_TRAIN_EPOCHS = [1]#, 2, 3] # 5 # number of epochs to train a model during one AL cicle
-BATCH_SIZE = 16 #! should be 8 for DeepLab training
-INITIAL_LR = 1e-4
-WEIGHT_DECAY = 1
-INITIAL_N_TRAIN_IMAGES = 200 # 20, initial number of accessible labelled images
-NUM_UNCERTAIN_IMAGES = [200]#, 400, 600]#, 400] #, 100] # k: number of uncertain images to label at each AL cicle
-SEMSEG_CLASSES = ['road', 'car']
-SAMPLES_SELECTIONS = ['Committee', 'Random']
-ENSEMBLE_SIZE = 2
-VISUALIZE_UNCERTAIN = False
-VERBOSE_TRAIN = True
+from params import *
 
 
 def models_ensemble(epochs, n_models=4):
@@ -61,7 +47,6 @@ def al_experiment(models,
                   visualize_most_uncertain=False,
                   verbose_train=False,
                   random_seed=1):
-
     # get the data
     if DATASET_TYPE == CamVid:
         X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(DATA_DIR='./data/CamVid/')
@@ -103,7 +88,7 @@ def al_experiment(models,
                         y_train_paths_part,
                         X_valid_paths,
                         y_valid_paths,
-                        Dataset=CamVid,
+                        Dataset=DATASET_TYPE,
                         verbose=verbose_train)
         # remeber results
         val_iou = np.mean([model.max_val_iou_score for model in models])

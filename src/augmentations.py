@@ -1,15 +1,16 @@
 import albumentations as albu
+from params import IMG_HEIGHT, IMG_WIDTH
 
 
 def get_training_augmentation():
     train_transform = [
-        albu.Resize(320, 320, interpolation=1, always_apply=True),
+        albu.Resize(IMG_HEIGHT, IMG_WIDTH, interpolation=1, always_apply=True),
 
         albu.HorizontalFlip(p=0.5),
 
         albu.ShiftScaleRotate(scale_limit=0.5, rotate_limit=0, shift_limit=0.1, p=1, border_mode=0),
 
-        albu.PadIfNeeded(min_height=320, min_width=320, always_apply=True, border_mode=0),
+        albu.PadIfNeeded(min_height=IMG_HEIGHT, min_width=IMG_WIDTH, always_apply=True, border_mode=0),
 
         albu.IAAAdditiveGaussianNoise(p=0.2),
         albu.IAAPerspective(p=0.5),
@@ -46,7 +47,7 @@ def get_training_augmentation():
 def get_validation_augmentation():
     """Add paddings to make image shape divisible by 32"""
     test_transform = [
-        albu.Resize(320, 320, interpolation=1, always_apply=True) #cv2.INTER_LINEAR
+        albu.Resize(IMG_HEIGHT, IMG_WIDTH, interpolation=1, always_apply=True) #cv2.INTER_LINEAR
     ]
     return albu.Compose(test_transform)
 

@@ -8,7 +8,7 @@ import cv2
 import matplotlib.pyplot as plt
 from utils import visualize
 from utils import pickle_load, pickle_save
-from utils import get_bdd_paths, get_camvid_paths
+from utils import get_bdd_paths, get_camvid_paths, get_cityscapes_paths
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
@@ -19,28 +19,38 @@ from segmodel import SegModel
 # anomaly detection functions
 from anomaly_detection import sample_selection_function
 # datasets wrapper
-from dataset import CamVid, BDD100K
+from dataset import CamVid, BDD100K, Cityscapes
+from params import *
 
 
-### Active Learning experiment
-# 
-# - X_train, y_train: is used partially to train a model
-# - X_valid, y_valid: is used fully for validation
-# - X_test, y_test: is used as an unlabelled set to detect anomalies and add labels to train set
-def al_experiment(model_name,
+
+def al_experiment(model,
                   samples_selection_str,
                   k,
                   experiment_name,
                   visualize_most_uncertain=False,
                   verbose_train=False,
                   random_seed=1):
+    """
+    Active Learning experiment
+    - X_train, y_train: is used partially to train a model
+    - X_valid, y_valid: is used fully for validation
+    - X_test, y_test: is used as an unlabelled set to detect anomalies and add labels to train set
+    """
 
+    # tensorboard logging
     tb = SummaryWriter(log_dir=f'tb_runs/{experiment_name}')
-    # define model from its name
-    model = SegModel(model_name, classes=SEMSEG_CLASSES)
-    model.epochs = MODEL_TRAIN_EPOCHS
-    model.batch_size = BATCH_SIZE
-    model.learning_rate = INITIAL_LR
+    
+    # get the data
+    if DATASET_TYPE == CamVid:
+        X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(DATA_DIR='./data/CamVid/')
+    elif DATASET_TYPE == BDD100K:
+        X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/')
+    elif DATASET_TYPE == Cityscapes:
+        X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_cityscapes_paths(DATA_DIR='/home/ruslan/datasets/Cityscapes/')
+    else:
+        print('Choose DATASET_TYPE=CamVid, Cityscapes or BDD100K')
+
     # define samples selection function from its name
     samples_selection_fn = sample_selection_function(samples_selection_str)
     
@@ -113,6 +123,13 @@ def al_experiment(model_name,
     print('----------------------------------------\n')
     return IoUs, N_train_samples
 
+def define_model(model_name, epochs):
+    # define model from its name
+    model = SegModel(model_name, classes=SEMSEG_CLASSES)
+    model.epochs = epochs
+    model.batch_size = BATCH_SIZE
+    model.learning_rate = INITIAL_LR
+    return model
 
 def main():
 
@@ -144,13 +161,14 @@ def main():
             results[model_name][samples_selection_str] = {}
             
             # choose number of samples to select for labelling from inference results
-            for k in NUM_UNCERTAIN_IMAGES:
+            for k, epochs in zip(NUM_UNCERTAIN_IMAGES, MODEL_TRAIN_EPOCHS):
                 print(f'\nNumber of samples to label on one iteration, k={k}')
                 print('------------------------------------')
                 results[model_name][samples_selection_str][str(k)] = {}
                 
                 experiment_name = f'{model_name}-{samples_selection_str}-{k}'
-                IoUs, N_train_samples = al_experiment(model_name, samples_selection_str, k, experiment_name, verbose_train=True)
+                model = define_model(model_name, epochs)
+                IoUs, N_train_samples = al_experiment(model, samples_selection_str, k, experiment_name, verbose_train=True)
                 
                 results[model_name][samples_selection_str][str(k)]['IoUs'] = IoUs
                 results[model_name][samples_selection_str][str(k)]['N_train_samples'] = N_train_samples
@@ -180,17 +198,6 @@ def main():
     plt.savefig('results.png')
 
 
-MAX_QUEERY_IMAGES = 6900 # 220 # maximum number of images to train on during AL loop
-MODEL_TRAIN_EPOCHS = 1 # 5 # number of epochs to train a model during one AL cicle
-BATCH_SIZE = 8
-INITIAL_LR = 1e-4
-INITIAL_N_TRAIN_IMAGES = 100 # 20, initial number of accessible labelled images
-NUM_UNCERTAIN_IMAGES = [6800, 100, 400, 800] #, 100] # k: number of uncertain images to label at each AL cicle
-SAMPLES_SELECTIONS = ['Random', 'Margin', 'Entropy']
-MODELS = ['Unet']#, 'Linknet', 'FPN', 'PSPNet']
-SEMSEG_CLASSES = ['road', 'car']
-DATASET_TYPE = BDD100K # 'BDD100K' or 'CamVid'
-
 # BDD100K classes:
 # ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
 # 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
@@ -201,13 +208,6 @@ DATASET_TYPE = BDD100K # 'BDD100K' or 'CamVid'
 # 'tree', 'signsymbol', 'fence', 'car', 
 # 'pedestrian', 'bicyclist', 'unlabelled']
 
-### Load data
-if DATASET_TYPE == CamVid:
-    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(DATA_DIR='./data/CamVid/')
-elif DATASET_TYPE == BDD100K:
-    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/')
-else:
-    print('Choose DATASET_TYPE=CamVid or BDD100K')
 
 if __name__=='__main__':
     main()

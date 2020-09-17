@@ -7,20 +7,22 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from dataset import BDD100K, CamVid
+from dataset import BDD100K, CamVid, Cityscapes
 from segmodel import SegModel
-from utils import get_bdd_paths, get_camvid_paths
+from utils import get_bdd_paths, get_camvid_paths, get_cityscapes_paths
 
 
-DATASET_TYPE = CamVid # BDD100K or CamVid
+DATASET_TYPE = Cityscapes # BDD100K, Cityscapes or CamVid
 
 ### Load data
 if DATASET_TYPE == CamVid:
     X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(DATA_DIR='./data/CamVid/')
 elif DATASET_TYPE == BDD100K:
     X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/')
+elif DATASET_TYPE == Cityscapes:
+    X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_cityscapes_paths(DATA_DIR='/home/ruslan/datasets/Cityscapes/')
 else:
-    print('Choose DATASET_TYPE="CamVid" or "BDD100K"')
+    print('Choose DATASET_TYPE=CamVid, Cityscapes or BDD100K')
 
 # BDD100K classes:
 # ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
@@ -34,12 +36,12 @@ else:
 
 classes = ['road', 'car']
 
-model_names = ['Unet', 'Linknet', 'FPN', 'PSPNet', 'PAN', 'DeepLabV3']
+model_names = ['Unet']#, 'Linknet', 'FPN', 'PSPNet', 'PAN', 'DeepLabV3']
 ious = []
 
 for model_name in model_names:
     model = SegModel(model_name, encoder='mobilenet_v2', classes=classes)
-    model.epochs = 5
+    model.epochs = 1
     model.learning_rate = 1e-4
     model.batch_size = 8
 
