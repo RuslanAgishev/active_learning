@@ -6,3 +6,5 @@ opencv_python==4.2.0.34
 tqdm==4.41.1
 segmentation_models_pytorch==0.1.0
 tensorboard==2.3.0
+mxnet-mkl==1.6.0
+gluoncv==0.8.0
