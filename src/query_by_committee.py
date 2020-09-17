@@ -8,7 +8,7 @@ import cv2
 import matplotlib.pyplot as plt
 from utils import visualize
 from utils import pickle_load, pickle_save
-from utils import get_bdd_paths, get_camvid_paths
+from utils import get_bdd_paths, get_camvid_paths, get_cityscapes_paths
 from utils import find_common_elements
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -20,13 +20,13 @@ from segmodel import SegModel
 # anomaly detection functions
 from anomaly_detection import sample_selection_function
 # datasets wrapper
-from dataset import CamVid, BDD100K
+from dataset import CamVid, BDD100K, Cityscapes
 from datetime import datetime
 from copy import deepcopy
 
 
-DATASET_TYPE = BDD100K
-MAX_QUEERY_IMAGES = 1200 # 220 # maximum number of images to train on during AL loop
+DATASET_TYPE = Cityscapes
+MAX_QUEERY_IMAGES = 200 # 220 # maximum number of images to train on during AL loop
 MODEL_TRAIN_EPOCHS = [1]#, 2, 3] # 5 # number of epochs to train a model during one AL cicle
 BATCH_SIZE = 16 #! should be 8 for DeepLab training
 INITIAL_LR = 1e-4
@@ -35,7 +35,7 @@ INITIAL_N_TRAIN_IMAGES = 200 # 20, initial number of accessible labelled images
 NUM_UNCERTAIN_IMAGES = [200]#, 400, 600]#, 400] #, 100] # k: number of uncertain images to label at each AL cicle
 SEMSEG_CLASSES = ['road', 'car']
 SAMPLES_SELECTIONS = ['Committee', 'Random']
-ENSEMBLE_SIZE = 3
+ENSEMBLE_SIZE = 2
 VISUALIZE_UNCERTAIN = False
 VERBOSE_TRAIN = True
 
@@ -67,8 +67,10 @@ def al_experiment(models,
         X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(DATA_DIR='./data/CamVid/')
     elif DATASET_TYPE == BDD100K:
         X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_bdd_paths(DATA_DIR='/home/ruslan/datasets/bdd100k/seg/')
+    elif DATASET_TYPE == Cityscapes:
+        X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_cityscapes_paths(DATA_DIR='/home/ruslan/datasets/Cityscapes/')
     else:
-        print('Choose DATASET_TYPE=CamVid or BDD100K')
+        print('Choose DATASET_TYPE=CamVid, Cityscapes or BDD100K')
 
     # tensorboard
     tb = SummaryWriter(log_dir=f'tb_runs/{experiment_name}')

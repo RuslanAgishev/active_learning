@@ -84,8 +84,8 @@ from gluoncv.data import CitySegmentation
 def get_cityscapes_paths(DATA_DIR='/home/ruslan/datasets/Cityscapes/'):
     train_data = CitySegmentation(root=DATA_DIR, split='train')
     valid_data = CitySegmentation(root=DATA_DIR, split='val')
-    X_train_paths = train_data.images
-    y_train_paths = train_data.mask_paths
-    X_valid_paths = valid_data.images
-    y_valid_paths = valid_data.mask_paths
+    X_train_paths = np.array(train_data.images)
+    y_train_paths = np.array(train_data.mask_paths)
+    X_valid_paths = np.array(valid_data.images)
+    y_valid_paths = np.array(valid_data.mask_paths)
     return X_train_paths, y_train_paths, X_valid_paths, y_valid_paths
