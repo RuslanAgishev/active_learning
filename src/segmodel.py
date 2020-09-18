@@ -27,7 +27,6 @@ class SegModel:
         self.arch = self.arch_selection_function(name)
         self.encoder = encoder
         self.encoder_weights = encoder_weights
-        # BDD100K classes
         self.classes = classes
         self.n_classes = 1 if len(self.classes) == 1 else (len(self.classes) + 1)
         self.activation = 'sigmoid' if len(self.classes) == 1 else 'softmax2d'
@@ -64,13 +63,14 @@ class SegModel:
         return arch
 
     def create_epoch_runners(self,
+                             model,
                              loss,
                              metrics,
                              optimizer,
                              verbose=False):
         # it is a simple loop of iterating over dataloader`s samples
         train_epoch = smp.utils.train.TrainEpoch(
-            self.model, 
+            model=model,
             loss=loss, 
             metrics=metrics, 
             optimizer=optimizer,
@@ -78,7 +78,7 @@ class SegModel:
             verbose=verbose,
         )
         valid_epoch = smp.utils.train.ValidEpoch(
-            self.model, 
+            model=model,
             loss=loss, 
             metrics=metrics, 
             device=self.device,
@@ -126,6 +126,7 @@ class SegModel:
         if self.model is None:
             print(f'Creating new model: {self.name}_{self.encoder}')
             self.create_model()
+        self.model.train()
         # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
         # IoU/Jaccard score - https://en.wikipedia.org/wiki/Jaccard_index
         loss = smp.utils.losses.DiceLoss()
@@ -135,7 +136,7 @@ class SegModel:
         optimizer = torch.optim.Adam([ 
             dict(params=self.model.parameters(), lr=self.learning_rate),
         ])
-        train_epoch, valid_epoch = self.create_epoch_runners(loss, metrics, optimizer, verbose=verbose)
+        train_epoch, valid_epoch = self.create_epoch_runners(self.model, loss, metrics, optimizer, verbose=verbose)
         train_dataset, valid_dataset = self.create_datasets(train_images_paths,
                                                             train_masks_paths,
                                                             valid_images_paths,
@@ -168,7 +169,8 @@ class SegModel:
         # update model with the best saved
         self.max_val_iou_score = val_max_score
         self.max_train_iou_score = train_max_score
-        self.model = torch.load(f'./{self.name}_{self.encoder}_best_model.pth')
+        self.model = torch.load(f'./{self.name}_{self.encoder}_best_model.pth').train()
+
         
     def predict(self, image_paths):
         images = []

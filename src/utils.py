@@ -70,11 +70,11 @@ def get_bdd_paths(path='/home/ruslan/datasets/bdd100k/seg/'):
     # x_test_dir = os.path.join(path, 'images/test')
 
     # all data paths
-    X_train_paths = np.array([os.path.join(x_train_dir, image_name) for image_name in os.listdir(x_train_dir)])
-    y_train_paths = np.array([os.path.join(y_train_dir, image_name) for image_name in os.listdir(y_train_dir)])
+    X_train_paths = np.sort([os.path.join(x_train_dir, image_name) for image_name in os.listdir(x_train_dir)])
+    y_train_paths = np.sort([os.path.join(y_train_dir, image_name) for image_name in os.listdir(y_train_dir)])
 
-    X_valid_paths = np.array([os.path.join(x_valid_dir, image_name) for image_name in os.listdir(x_valid_dir)])
-    y_valid_paths = np.array([os.path.join(y_valid_dir, image_name) for image_name in os.listdir(y_valid_dir)])
+    X_valid_paths = np.sort([os.path.join(x_valid_dir, image_name) for image_name in os.listdir(x_valid_dir)])
+    y_valid_paths = np.sort([os.path.join(y_valid_dir, image_name) for image_name in os.listdir(y_valid_dir)])
     # X_test_paths = np.array([os.path.join(x_test_dir, image_name) for image_name in os.listdir(x_test_dir)])
     
     return X_train_paths, y_train_paths, X_valid_paths, y_valid_paths

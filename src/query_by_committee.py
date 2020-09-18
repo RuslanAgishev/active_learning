@@ -61,16 +61,16 @@ def al_experiment(models,
     tb = SummaryWriter(log_dir=f'tb_runs/{experiment_name}')
     
     # choose first data batch to train on
-    np.random.seed(random_seed)
-    X = deepcopy(X_train_paths)
-    y = deepcopy(y_train_paths)
+    X_pull = deepcopy(X_train_paths)
+    y_pull = deepcopy(y_train_paths)
     
-    initial_selection = np.random.choice(len(X), INITIAL_N_TRAIN_IMAGES, replace=False) # k
-    X_train_paths_part = X[initial_selection]
-    y_train_paths_part = y[initial_selection]
+    np.random.seed(random_seed)
+    initial_selection = np.random.choice(len(X_pull), INITIAL_N_TRAIN_IMAGES, replace=False) # k
+    X_train_paths_part = X_pull[initial_selection]
+    y_train_paths_part = y_pull[initial_selection]
 
-    X_test = np.delete(X, initial_selection)
-    y_test = np.delete(X, initial_selection)
+    X_test = np.delete(X_pull, initial_selection)
+    y_test = np.delete(y_pull, initial_selection)
     
     samples_selection_fn = sample_selection_function(samples_selection_name)
     
@@ -112,7 +112,7 @@ def al_experiment(models,
         selected_images_indexes = samples_selection_fn(X_test, k, models)
 
         # Visualization
-        if visualize_most_uncertain and samples_selection_name!='Random':
+        if visualize_most_uncertain:
             print('Visualizing most uncertain results so far:')
             for i in selected_images_indexes[:1]:
                 img_path = X_test[i]
@@ -123,22 +123,23 @@ def al_experiment(models,
                     
                     plt.figure(figsize=(16, 5))
                     title = f'{model.name}_{model.encoder}_N_train_{len(X_train_paths_part)}'
-                    print(title)
                     visualize(image=image, road_mask=mask_np[0,...], car_mask=mask_np[1,...])
                     plt.title(title)
                     plt.show()
 
         # Add labels for uncertain images to train data
-        #print('Labelled set before: ', len(X_train_paths_part))
+        # print('Labelled set before: ', len(X_train_paths_part))
         X_train_paths_part = np.concatenate([X_train_paths_part, X_test[selected_images_indexes]])
         y_train_paths_part = np.concatenate([y_train_paths_part, y_test[selected_images_indexes]])
-        #print('Labelled set after: ', len(X_train_paths_part))
+        # X_train_paths_part = X_test[selected_images_indexes]
+        # y_train_paths_part = y_test[selected_images_indexes]
+        # print('Labelled set after: ', len(X_train_paths_part))
 
         # Remove labelled data from validation set
-        #print('Unlabelled set before: ', len(X_test))
+        # print('Unlabelled set before: ', len(X_test))
         X_test = np.delete(X_test, selected_images_indexes)
         y_test = np.delete(y_test, selected_images_indexes)
-        #print('Unlabelled set after: ', len(X_test))
+        # print('Unlabelled set after: ', len(X_test))
 
     print(f'Max IoU score: {np.max(IoUs)}')
     print('----------------------------------------\n')

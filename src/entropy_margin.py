@@ -25,7 +25,7 @@ from params import *
 
 
 def al_experiment(model,
-                  samples_selection_str,
+                  samples_selection_name,
                   k,
                   experiment_name,
                   visualize_most_uncertain=False,
@@ -52,18 +52,18 @@ def al_experiment(model,
         print('Choose DATASET_TYPE=CamVid, Cityscapes or BDD100K')
 
     # define samples selection function from its name
-    samples_selection_fn = sample_selection_function(samples_selection_str)
+    samples_selection_fn = sample_selection_function(samples_selection_name)
     
     # select k random samples from initial dataset and treat it as initially labelled data
-    X = np.copy(X_train_paths)
-    y = np.copy(y_train_paths)
+    X_pull = np.copy(X_train_paths)
+    y_pull = np.copy(y_train_paths)
     np.random.seed(random_seed)
-    initial_selection = np.random.choice(len(X), INITIAL_N_TRAIN_IMAGES, replace=False) # k
-    X_train_paths_part = X[initial_selection]
-    y_train_paths_part = y[initial_selection]
+    initial_selection = np.random.choice(len(X_pull), INITIAL_N_TRAIN_IMAGES, replace=False) # k
+    X_train_paths_part = X_pull[initial_selec_pulltion]
+    y_train_paths_part = y_pull[initial_selection]
 
-    X_test = np.delete(X, initial_selection)
-    y_test = np.delete(X, initial_selection)
+    X_test = np.delete(X_pull, initial_selection)
+    y_test = np.delete(y_pull, initial_selection)
 
     IoUs = [0.]
     N_train_samples = [0]
@@ -101,11 +101,14 @@ def al_experiment(model,
             for i in selected_images_indexes[:1]:
                 img_path = X_test[i]
                 image = cv2.imread(img_path)[...,(2,1,0)]
-                gt_mask = cv2.imread(y_test_paths[i])
                 pr_mask = model.predict([img_path])
                 mask_np = pr_mask.squeeze().cpu().numpy().round()
-
-                visualize(image=image, car_mask=mask_np[0,...], road_mask=mask_np[1,...])
+                
+                plt.figure(figsize=(16, 5))
+                title = f'{model.name}_{model.encoder}_N_train_{len(X_train_paths_part)}'
+                visualize(image=image, road_mask=mask_np[0,...], car_mask=mask_np[1,...])
+                plt.title(title)
+                plt.show()
 
         # Add labels for uncertain images to train data
         #print('Labelled set before: ', len(X_train_paths_part))
@@ -155,23 +158,28 @@ def main():
         results[model_name] = {}
         
         # choose samples selection function
-        for samples_selection_str in SAMPLES_SELECTIONS:
-            print(f'\nSamples selection function: {samples_selection_str}')
+        for samples_selection_name in SAMPLES_SELECTIONS:
+            print(f'\nSamples selection function: {samples_selection_name}')
             print('------------------------------------')
-            results[model_name][samples_selection_str] = {}
+            results[model_name][samples_selection_name] = {}
             
             # choose number of samples to select for labelling from inference results
             for k, epochs in zip(NUM_UNCERTAIN_IMAGES, MODEL_TRAIN_EPOCHS):
                 print(f'\nNumber of samples to label on one iteration, k={k}')
                 print('------------------------------------')
-                results[model_name][samples_selection_str][str(k)] = {}
+                results[model_name][samples_selection_name][str(k)] = {}
                 
-                experiment_name = f'{model_name}-{samples_selection_str}-{k}'
+                experiment_name = f'{model_name}-{samples_selection_name}-{k}'
                 model = define_model(model_name, epochs)
-                IoUs, N_train_samples = al_experiment(model, samples_selection_str, k, experiment_name, verbose_train=True)
+                IoUs, N_train_samples = al_experiment(model,
+                                                      samples_selection_name,
+                                                      k,
+                                                      experiment_name,
+                                                      verbose_train=VERBOSE_TRAIN,
+                                                      visualize_most_uncertain=VISUALIZE_UNCERTAIN)
                 
-                results[model_name][samples_selection_str][str(k)]['IoUs'] = IoUs
-                results[model_name][samples_selection_str][str(k)]['N_train_samples'] = N_train_samples
+                results[model_name][samples_selection_name][str(k)]['IoUs'] = IoUs
+                results[model_name][samples_selection_name][str(k)]['N_train_samples'] = N_train_samples
                 
     pickle_save('./results/'+RESULTS_FNAME, results)
 
@@ -181,14 +189,14 @@ def main():
     # choose model
     for model_name in MODELS:    
         # choose samples selection function
-        for samples_selection_str in SAMPLES_SELECTIONS:        
+        for samples_selection_name in SAMPLES_SELECTIONS:        
             # choose number of samples to select for labelling from inference results
             for k in NUM_UNCERTAIN_IMAGES:
 
-                ious = results[model_name][samples_selection_str][str(k)]['IoUs']
-                n_train = results[model_name][samples_selection_str][str(k)]['N_train_samples']
+                ious = results[model_name][samples_selection_name][str(k)]['IoUs']
+                n_train = results[model_name][samples_selection_name][str(k)]['N_train_samples']
 
-                plt.plot(np.array(n_train[1:]), ious[1:], label=model_name+'_'+samples_selection_str+'_k='+str(k))
+                plt.plot(np.array(n_train[1:]), ious[1:], label=model_name+'_'+samples_selection_name+'_k='+str(k))
             
     plt.grid()
     plt.title('Active Learning Results', fontsize=18)
@@ -196,17 +204,6 @@ def main():
     plt.ylabel('IoU', fontsize=16)
     plt.legend()
     plt.savefig('results.png')
-
-
-# BDD100K classes:
-# ['road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
-# 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider', 'car',
-# 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
-
-# CamVid classes:
-# ['sky', 'building', 'pole', 'road', 'pavement', 
-# 'tree', 'signsymbol', 'fence', 'car', 
-# 'pedestrian', 'bicyclist', 'unlabelled']
 
 
 if __name__=='__main__':
