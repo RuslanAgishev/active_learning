@@ -6,9 +6,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from utils import visualize
-from utils import pickle_load, pickle_save
-from utils import get_bdd_paths, get_camvid_paths, get_cityscapes_paths
+from utils import *
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
@@ -21,7 +19,7 @@ from anomaly_detection import sample_selection_function
 # datasets wrapper
 from dataset import CamVid, BDD100K, Cityscapes
 from params import *
-
+from datetime import datetime
 
 
 def al_experiment(model,
@@ -57,9 +55,9 @@ def al_experiment(model,
     # select k random samples from initial dataset and treat it as initially labelled data
     X_pull = np.copy(X_train_paths)
     y_pull = np.copy(y_train_paths)
-    np.random.seed(random_seed)
+    set_random_seed(random_seed)
     initial_selection = np.random.choice(len(X_pull), INITIAL_N_TRAIN_IMAGES, replace=False) # k
-    X_train_paths_part = X_pull[initial_selec_pulltion]
+    X_train_paths_part = X_pull[initial_selection]
     y_train_paths_part = y_pull[initial_selection]
 
     X_test = np.delete(X_pull, initial_selection)
@@ -73,7 +71,7 @@ def al_experiment(model,
         # train model
         print('Labelled set size: ', len(X_train_paths_part))
         print('Unlabelled set size: ', len(X_test))
-        print(f'\nTraining a model for {MODEL_TRAIN_EPOCHS} epochs...')
+        print(f'\nTraining a model for {model.epochs} epochs...')
         model.train(X_train_paths_part,
                     y_train_paths_part,
                     X_valid_paths,
@@ -126,12 +124,13 @@ def al_experiment(model,
     print('----------------------------------------\n')
     return IoUs, N_train_samples
 
-def define_model(model_name, epochs):
+def define_model(model_name, epochs, batch_size=8, lr=1e-4, seed=0):
     # define model from its name
+    set_random_seed(seed)
     model = SegModel(model_name, classes=SEMSEG_CLASSES)
     model.epochs = epochs
-    model.batch_size = BATCH_SIZE
-    model.learning_rate = INITIAL_LR
+    model.batch_size = batch_size
+    model.learning_rate = lr
     return model
 
 def main():
@@ -151,6 +150,7 @@ def main():
 
 
     results = {}
+    dt = datetime.now().strftime("%A_%d_%B_%Y_%I:%M%p") # date time
     # choose model
     for model_name in MODELS:
         print(f'\nModel name: {model_name}')
@@ -169,8 +169,8 @@ def main():
                 print('------------------------------------')
                 results[model_name][samples_selection_name][str(k)] = {}
                 
-                experiment_name = f'{model_name}-{samples_selection_name}-{k}'
-                model = define_model(model_name, epochs)
+                experiment_name = f'AL_experiment_{dt}/{model_name}-{samples_selection_name}-{k}'
+                model = define_model(model_name, epochs, BATCH_SIZE, INITIAL_LR)
                 IoUs, N_train_samples = al_experiment(model,
                                                       samples_selection_name,
                                                       k,

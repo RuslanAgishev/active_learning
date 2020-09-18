@@ -6,10 +6,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from utils import visualize
-from utils import pickle_load, pickle_save
-from utils import get_bdd_paths, get_camvid_paths, get_cityscapes_paths
-from utils import find_common_elements
+from utils import *
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
@@ -26,18 +23,23 @@ from copy import deepcopy
 from params import *
 
 
-def models_ensemble(epochs, n_models=4):
+def models_ensemble(epochs, n_models=3, batch_size=8, lr=1e-4, seed=0):
+    set_random_seed(seed)
     model1 = SegModel('Unet', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
+    set_random_seed(seed)
     model2 = SegModel('FPN', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
-    model3 = SegModel('PAN', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
+    set_random_seed(seed)
+    model3 = SegModel('PSPNet', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
+    set_random_seed(seed)
     model4 = SegModel('DeepLabV3', encoder='mobilenet_v2', classes=SEMSEG_CLASSES)
-    # choose from defined models
+    # models list
     models = [model1, model2, model3, model4]
+    # choose from defined models
     models = models[:n_models]
     for model in models:
         model.epochs = epochs
-        model.batch_size = BATCH_SIZE
-        model.learning_rate = INITIAL_LR
+        model.batch_size = batch_size
+        model.learning_rate = lr
     return models
 
 def al_experiment(models,
@@ -46,7 +48,7 @@ def al_experiment(models,
                   experiment_name='AL_experiment',
                   visualize_most_uncertain=False,
                   verbose_train=False,
-                  random_seed=1):
+                  random_seed=0):
     # get the data
     if DATASET_TYPE == CamVid:
         X_train_paths, y_train_paths, X_valid_paths, y_valid_paths = get_camvid_paths(path=os.path.join(DATA_DIR, 'CamVid/'))
@@ -64,7 +66,7 @@ def al_experiment(models,
     X_pull = deepcopy(X_train_paths)
     y_pull = deepcopy(y_train_paths)
     
-    np.random.seed(random_seed)
+    set_random_seed(random_seed)
     initial_selection = np.random.choice(len(X_pull), INITIAL_N_TRAIN_IMAGES, replace=False) # k
     X_train_paths_part = X_pull[initial_selection]
     y_train_paths_part = y_pull[initial_selection]
@@ -160,7 +162,7 @@ for samples_selection_name in SAMPLES_SELECTIONS:
         print('------------------------------------')
 
         # define models committee
-        models = models_ensemble(epochs, n_models=ENSEMBLE_SIZE)
+        models = models_ensemble(epochs, n_models=ENSEMBLE_SIZE, batch_size=BATCH_SIZE, lr=INITIAL_LR)
             
         results[samples_selection_name][str(k)] = {}
 
