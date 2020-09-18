@@ -27,12 +27,12 @@ Currently implemented anomaly detection strategies:
 
 Entropy and Margin samples selection:
 ```bash
-python src/active_learning.py
+python src/entropy_margin.py
 ```
 
 Query-by-committee samples selection:
 ```bash
-python src/active_learning_query_by_committee.py
+python src/query_by_committee.py
 ```
 
 ## Tensorboard logging
