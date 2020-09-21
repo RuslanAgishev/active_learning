@@ -13,7 +13,7 @@ from utils import get_bdd_paths, get_camvid_paths, get_cityscapes_paths
 from params import DATA_DIR
 
 
-DATASET_TYPE = Cityscapes # BDD100K, Cityscapes or CamVid
+DATASET_TYPE = CamVid # BDD100K, Cityscapes or CamVid
 
 ### Load data
 if DATASET_TYPE == CamVid:
