@@ -37,9 +37,14 @@ python src/query_by_committee.py
 
 ## Tensorboard logging
 
+Start tensorboard, specifying the path to logging directory.
 ```bash
 tensorboard --logdir src/tb_runs/EXPERIMENT_NAME
 ```
+
+In your browser open
+`http://localhost:6006`
+to see the results.
 
 ## Reference:
 - [J. Prendki, An Introduction to Active Learning, ODSC](https://opendatascience.com/an-introduction-to-active-learning/)
