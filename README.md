@@ -58,4 +58,4 @@ to see the results.
 - [J. Prendki, An Introduction to Active Learning, ODSC](https://opendatascience.com/an-introduction-to-active-learning/)
 - [Active Learning  Tutorial](https://towardsdatascience.com/active-learning-tutorial-57c3398e34d)
 - [B. Settles, Active Learning Literature Survey, CS Technical Report](http://burrsettles.com/pub/settles.activelearning.pdf)
-- [Presentation for Cognitive](https://docs.google.com/presentation/d/1hPEoEF2r28R3TfnTWgk6VHkv9B_H4tiiWEYi-wS2U2I/edit?usp=sharing)
+- [Presentation](https://docs.google.com/presentation/d/1fFFrO8y6Cy0o1sSY5cRSHEW2sCoB8q6GDti93o09D7Q/edit?usp=sharing)
